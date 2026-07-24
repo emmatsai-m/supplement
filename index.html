@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>服用紀錄卡</title>
 <style>
   :root{
@@ -264,10 +265,32 @@
   }
   .del-btn:hover{ color: var(--red); }
 
-  @media (max-width: 560px){
+  .table-scroll{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  table{ min-width: 560px; }
+
+  @media (max-width: 700px){
+    .wrap{ padding: 20px 14px 60px; }
+    header.top{
+      flex-direction:column;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .date-badge{ text-align:left; }
     h1{ font-size:22px; }
     .tabs{ width:100%; }
     .tab-btn{ flex:1; text-align:center; padding:10px 8px; }
+    .card{ padding: 16px 16px; }
+    .actions{ justify-content:stretch; }
+    button.submit{ width:100%; }
+  }
+
+  @media (max-width: 420px){
+    .stats{ grid-template-columns: repeat(2, 1fr); }
+    .form-grid{ grid-template-columns: 1fr 1fr; }
   }
 </style>
 </head>
@@ -577,12 +600,14 @@ function renderPurchases(){
       </tr>
     `).join('');
     wrap.innerHTML = `
+      <div class="table-scroll">
       <table>
         <thead><tr>
           <th>日期</th><th>品牌</th><th>品名</th><th>單價</th><th>數量</th><th>小計</th><th>備註</th><th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
+      </div>
     `;
   }
 
@@ -667,12 +692,14 @@ function renderUsages(){
       `;
     }).join('');
     wrap.innerHTML = `
+      <div class="table-scroll">
       <table>
         <thead><tr>
           <th>日期時間</th><th>品項</th><th>劑量</th><th>身體反應</th><th>備註</th><th></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
+      </div>
     `;
   }
 
