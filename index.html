@@ -77,7 +77,7 @@
   .tab-btn{
     border:none;
     background: transparent;
-    padding: 10px 26px;
+    padding: 10px 22px;
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.05em;
@@ -151,6 +151,10 @@
   .field input:focus, .field select:focus{
     outline: 2px solid var(--teal);
     outline-offset: 1px;
+  }
+  .field input:disabled{
+    background: #F1F4F1;
+    color: var(--ink-soft);
   }
 
   .chip-select{
@@ -270,7 +274,56 @@
     overflow-x:auto;
     -webkit-overflow-scrolling:touch;
   }
-  table{ min-width: 560px; }
+  table{ min-width: 480px; }
+
+  /* 條列式清單 */
+  .list-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  .list-row:last-child{ border-bottom:none; }
+  .lr-main{ flex:1; min-width:0; }
+  .lr-title{ font-size:14px; font-weight:600; }
+  .lr-sub{ font-size:12px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
+  .lr-total{ font-size:14px; white-space:nowrap; }
+
+  .pagination{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    margin-top:18px;
+  }
+  .page-btn{
+    border:1px solid var(--line); background:#fff; border-radius:999px;
+    padding:6px 16px; font-size:12.5px; cursor:pointer; font-family:inherit; color:var(--ink);
+  }
+  .page-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .page-info{ font-size:12.5px; color:var(--ink-soft); }
+
+  /* 月曆 */
+  .cal-nav{ display:flex; align-items:center; justify-content:center; gap:22px; margin-bottom:14px; }
+  .cal-title{ font-family:"Noto Serif TC", serif; font-size:16px; min-width:110px; text-align:center; }
+  .cal-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; }
+  .cal-dow{ font-size:11px; color:var(--ink-soft); text-align:center; padding-bottom:4px; }
+  .cal-cell{
+    aspect-ratio: 1 / 1;
+    border:1px solid var(--line); border-radius:10px;
+    padding:6px 4px; cursor:pointer; background:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:4px;
+    font-size:12px;
+    transition: background .12s ease, color .12s ease;
+  }
+  .cal-cell:hover{ border-color: var(--teal); }
+  .cal-cell.blank{ visibility:hidden; cursor:default; }
+  .cal-cell.today{ border-color:var(--teal); border-width:1.5px; }
+  .cal-cell.selected{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .cal-count{
+    min-width:16px; height:16px; border-radius:999px; color:#fff; font-size:10px;
+    display:flex; align-items:center; justify-content:center; padding:0 4px;
+  }
+  .cal-day-detail{ margin-top:20px; border-top:1px solid var(--line); padding-top:14px; }
+  .cal-day-detail h3{ font-size:13px; margin:0 0 10px; color:var(--ink-soft); font-weight:600; letter-spacing:0.04em; }
 
   @media (max-width: 700px){
     .wrap{ padding: 20px 14px 60px; }
@@ -282,10 +335,11 @@
     .date-badge{ text-align:left; }
     h1{ font-size:22px; }
     .tabs{ width:100%; }
-    .tab-btn{ flex:1; text-align:center; padding:10px 8px; }
+    .tab-btn{ flex:1; text-align:center; padding:10px 6px; font-size:12.5px; }
     .card{ padding: 16px 16px; }
     .actions{ justify-content:stretch; }
     button.submit{ width:100%; }
+    .cal-title{ font-size:14px; min-width:90px; }
   }
 
   @media (max-width: 420px){
@@ -315,12 +369,10 @@
     </div>
   </header>
 
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:10px;">
-    <div class="tabs" style="margin-bottom:0;">
-      <button class="tab-btn active" data-tab="buy">購買紀錄</button>
-      <button class="tab-btn" data-tab="use">服用紀錄</button>
-    </div>
-    <button onclick="resetAllData()" style="border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:999px; padding:7px 16px; font-size:12px; cursor:pointer; font-family:inherit;">清除我的所有紀錄</button>
+  <div class="tabs" style="margin-bottom:24px;">
+    <button class="tab-btn active" data-tab="buy">購買紀錄</button>
+    <button class="tab-btn" data-tab="use">服用紀錄</button>
+    <button class="tab-btn" data-tab="stock">商品庫存</button>
   </div>
 
   <!-- 購買紀錄 -->
@@ -331,28 +383,24 @@
       <h2><span class="dot"></span>新增購買</h2>
       <div class="form-grid">
         <div class="field">
-          <label>購買日期</label>
+          <label>日期</label>
           <input type="date" id="buy-date">
         </div>
-        <div class="field">
-          <label>品牌</label>
-          <input type="text" id="buy-brand" placeholder="例如：善存">
+        <div class="field" style="grid-column: span 2;">
+          <label>商品名稱</label>
+          <input type="text" id="buy-name" placeholder="例如：善存 綜合維他命">
         </div>
         <div class="field">
-          <label>品名</label>
-          <input type="text" id="buy-name" placeholder="例如：綜合維他命">
+          <label>數量</label>
+          <input type="number" id="buy-qty" min="1" step="1" value="1" oninput="updateBuyTotal()">
         </div>
         <div class="field">
           <label>單價（元）</label>
-          <input type="number" id="buy-price" min="0" step="1" placeholder="0">
+          <input type="number" id="buy-price" min="0" step="1" placeholder="0" oninput="updateBuyTotal()">
         </div>
         <div class="field">
-          <label>數量（瓶／盒）</label>
-          <input type="number" id="buy-qty" min="1" step="1" value="1">
-        </div>
-        <div class="field" style="grid-column: 1/-1;">
-          <label>備註</label>
-          <input type="text" id="buy-note" placeholder="購買通路、優惠等（選填）">
+          <label>總價（自動計算）</label>
+          <input type="text" id="buy-total" value="NT$ 0" disabled>
         </div>
       </div>
       <div class="actions">
@@ -361,8 +409,9 @@
     </div>
 
     <div class="card">
-      <h2><span class="dot"></span>購買清單</h2>
-      <div id="buyTableWrap"></div>
+      <h2><span class="dot"></span>採購紀錄</h2>
+      <div id="buyListWrap"></div>
+      <div class="pagination" id="buyPagination"></div>
     </div>
   </section>
 
@@ -382,7 +431,7 @@
           <input type="time" id="use-time">
         </div>
         <div class="field" style="grid-column: span 2;">
-          <label>品牌／品名</label>
+          <label>商品名稱</label>
           <select id="use-item">
             <option value="">請先於「購買紀錄」新增品項</option>
           </select>
@@ -406,24 +455,62 @@
     </div>
 
     <div class="card">
-      <h2><span class="dot"></span>服用歷程</h2>
-      <div id="useTableWrap"></div>
+      <h2><span class="dot"></span>服用紀錄（月曆）</h2>
+      <div class="cal-nav">
+        <button class="page-btn" onclick="changeMonth(-1)">‹ 上個月</button>
+        <div class="cal-title" id="calTitle"></div>
+        <button class="page-btn" onclick="changeMonth(1)">下個月 ›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-day-detail" id="calDayDetail"></div>
+    </div>
+  </section>
+
+  <!-- 商品庫存 -->
+  <section class="panel" id="panel-stock">
+    <div class="card">
+      <h2><span class="dot"></span>商品庫存</h2>
+      <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 16px; line-height:1.6;">
+        剩餘庫存為估算值：以該商品累計採購數量，扣除服用紀錄筆數計算（假設每筆服用紀錄消耗 1 份採購單位，非精確庫存）。
+      </p>
+      <div id="stockWrap"></div>
     </div>
   </section>
 
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
-// ===== 請先修改這兩行 =====
-// 貼上你在 Apps Script「部署 → 新增部署作業」拿到的網址
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyYjq8jYKRSd-a2jF6BCow-BA-qrJOPFLP4Ciqz4C9gYb2q4U3NhXeMA_X0UxVVejzs/exec';
-// 要跟 Code.gs 裡的 SECRET 完全一樣
-const SECRET = 'FIRST_AIWEB_BY_EMMA';
+// ===== 請貼上 Firebase 專案設定（在 Firebase 主控台「專案設定」裡拿得到）=====
+const firebaseConfig = {
+  apiKey: "AIzaSyCpsotqRmgQ56M7-Y3IkS5OyUHbcxMZ2_s",
+  authDomain: "supplement-969a3.firebaseapp.com",
+  projectId: "supplement-969a3",
+  storageBucket: "supplement-969a3.firebasestorage.app",
+  messagingSenderId: "326540816293",
+  appId: "1:326540816293:web:d62c766b5f629f5032c24c",
+  measurementId: "G-HKDK3KSB6B"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 let purchases = [];
 let usages = [];
-let purchaseSeq = 1;
-let usageSeq = 1;
+let currentUid = null;
+let purchasePage = 1;
+const PAGE_SIZE = 20;
+
+let calYear, calMonth, selectedDate;
+(function initCalendarState(){
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  selectedDate = now.toISOString().slice(0,10);
+})();
 
 function setSyncStatus(text, isError){
   const el = document.getElementById('syncBadge');
@@ -431,67 +518,44 @@ function setSyncStatus(text, isError){
   el.style.color = isError ? 'var(--red)' : 'var(--ink-soft)';
 }
 
-function nextSeq(list){
-  return list.reduce((max, item) => Math.max(max, Number(item.id) || 0), 0) + 1;
-}
-
-async function loadAllData(){
+function attachListeners(){
   setSyncStatus('雲端同步中…', false);
-  try {
-    const res = await fetch(`${WEB_APP_URL}?secret=${encodeURIComponent(SECRET)}`);
-    const json = await res.json();
-    if(json.error) throw new Error(json.error);
 
-    purchases = (json.purchases || []).map(p => ({
-      ...p, price: Number(p.price) || 0, qty: Number(p.qty) || 0, id: Number(p.id)
-    }));
-    usages = (json.usages || []).map(u => ({ ...u, id: Number(u.id) }));
-    purchaseSeq = nextSeq(purchases);
-    usageSeq = nextSeq(usages);
-
-    setSyncStatus('已同步雲端', false);
-  } catch(err){
-    console.error('載入 Google Sheets 資料失敗', err);
-    setSyncStatus('雲端載入失敗，請確認網址與密鑰設定', true);
-  }
-  renderPurchases();
-  renderUseItemOptions();
-  renderUsages();
-}
-
-async function postToSheet(action, data){
-  setSyncStatus('儲存中…', false);
-  try {
-    const res = await fetch(WEB_APP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action, secret: SECRET, data })
+  db.collection('users').doc(currentUid).collection('purchases')
+    .onSnapshot(snap => {
+      purchases = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderPurchases();
+      renderUseItemOptions();
+      renderStock();
+      setSyncStatus('已同步雲端', false);
+    }, err => {
+      console.error('讀取購買紀錄失敗', err);
+      setSyncStatus('雲端讀取失敗，請確認 Firebase 設定與規則', true);
     });
-    const json = await res.json();
-    if(json.error) throw new Error(json.error);
-    setSyncStatus('已同步雲端', false);
-  } catch(err){
-    console.error('寫入 Google Sheets 失敗', err);
-    setSyncStatus('雲端儲存失敗，這筆僅暫存在本機', true);
+
+  db.collection('users').doc(currentUid).collection('usages')
+    .onSnapshot(snap => {
+      usages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderUsages();
+      renderStock();
+      setSyncStatus('已同步雲端', false);
+    }, err => {
+      console.error('讀取服用紀錄失敗', err);
+      setSyncStatus('雲端讀取失敗，請確認 Firebase 設定與規則', true);
+    });
+}
+
+auth.onAuthStateChanged(user => {
+  if(user){
+    currentUid = user.uid;
+    attachListeners();
   }
-}
+});
 
-function savePurchases(){ return postToSheet('savePurchases', purchases); }
-function saveUsages(){ return postToSheet('saveUsages', usages); }
-
-async function resetAllData(){
-  if(!confirm('確定要清除 Google 試算表上所有購買與服用紀錄嗎？此動作無法復原。')) return;
-  purchases = [];
-  usages = [];
-  purchaseSeq = 1;
-  usageSeq = 1;
-  renderPurchases();
-  renderUseItemOptions();
-  renderUsages();
-  await savePurchases();
-  await saveUsages();
-  setSyncStatus('已清除', false);
-}
+auth.signInAnonymously().catch(err => {
+  console.error('Firebase 登入失敗', err);
+  setSyncStatus('雲端連線失敗，請確認 Firebase 設定', true);
+});
 
 const reactionOptions = [
   { key: '精神良好', type: 'good' },
@@ -549,74 +613,96 @@ function renderChips(){
 renderChips();
 
 // ---- purchase ----
-function addPurchase(){
-  const date = document.getElementById('buy-date').value;
-  const brand = document.getElementById('buy-brand').value.trim();
-  const name = document.getElementById('buy-name').value.trim();
+function updateBuyTotal(){
+  const qty = parseFloat(document.getElementById('buy-qty').value) || 0;
   const price = parseFloat(document.getElementById('buy-price').value) || 0;
-  const qty = parseInt(document.getElementById('buy-qty').value) || 1;
-  const note = document.getElementById('buy-note').value.trim();
+  document.getElementById('buy-total').value = 'NT$ ' + (qty*price).toLocaleString();
+}
 
-  if(!date || !brand || !name){
-    alert('請至少填寫日期、品牌與品名');
+async function addPurchase(){
+  const date = document.getElementById('buy-date').value;
+  const name = document.getElementById('buy-name').value.trim();
+  const qty = parseInt(document.getElementById('buy-qty').value) || 1;
+  const price = parseFloat(document.getElementById('buy-price').value) || 0;
+  const total = qty * price;
+
+  if(!date || !name){
+    alert('請至少填寫日期與商品名稱');
     return;
   }
 
-  purchases.push({ id: purchaseSeq++, date, brand, name, price, qty, note });
-
-  document.getElementById('buy-brand').value = '';
-  document.getElementById('buy-name').value = '';
-  document.getElementById('buy-price').value = '';
-  document.getElementById('buy-qty').value = 1;
-  document.getElementById('buy-note').value = '';
-
-  renderPurchases();
-  renderUseItemOptions();
-  savePurchases();
+  setSyncStatus('儲存中…', false);
+  try {
+    await db.collection('users').doc(currentUid).collection('purchases').add({
+      date, name, qty, price, total,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('buy-name').value = '';
+    document.getElementById('buy-price').value = '';
+    document.getElementById('buy-qty').value = 1;
+    updateBuyTotal();
+    setSyncStatus('已同步雲端', false);
+  } catch(err){
+    console.error('新增購買紀錄失敗', err);
+    setSyncStatus('雲端寫入失敗，請確認網路與規則設定', true);
+  }
 }
 
-function deletePurchase(id){
-  purchases = purchases.filter(p=>p.id !== id);
+async function deletePurchase(id){
+  setSyncStatus('儲存中…', false);
+  try {
+    await db.collection('users').doc(currentUid).collection('purchases').doc(id).delete();
+    setSyncStatus('已同步雲端', false);
+  } catch(err){
+    console.error('刪除購買紀錄失敗', err);
+    setSyncStatus('雲端刪除失敗', true);
+  }
+}
+
+function changePurchasePage(delta){
+  purchasePage += delta;
   renderPurchases();
-  renderUseItemOptions();
-  savePurchases();
 }
 
 function renderPurchases(){
-  const wrap = document.getElementById('buyTableWrap');
-  if(purchases.length === 0){
-    wrap.innerHTML = '<div class="empty">還沒有購買紀錄，於上方表單新增第一筆吧。</div>';
+  const listWrap = document.getElementById('buyListWrap');
+  const pageWrap = document.getElementById('buyPagination');
+
+  const sorted = purchases.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  if(purchasePage > totalPages) purchasePage = totalPages;
+  if(purchasePage < 1) purchasePage = 1;
+  const startIdx = (purchasePage - 1) * PAGE_SIZE;
+  const pageItems = sorted.slice(startIdx, startIdx + PAGE_SIZE);
+
+  if(sorted.length === 0){
+    listWrap.innerHTML = '<div class="empty">還沒有購買紀錄，於上方表單新增第一筆吧。</div>';
+    pageWrap.innerHTML = '';
   } else {
-    const rows = purchases.slice().reverse().map(p=>`
-      <tr>
-        <td>${p.date}</td>
-        <td>${p.brand}</td>
-        <td>${p.name}</td>
-        <td class="money">NT$ ${p.price.toLocaleString()}</td>
-        <td>${p.qty}</td>
-        <td class="money">NT$ ${(p.price*p.qty).toLocaleString()}</td>
-        <td>${p.note || '—'}</td>
-        <td><button class="del-btn" onclick="deletePurchase(${p.id})">刪除</button></td>
-      </tr>
-    `).join('');
-    wrap.innerHTML = `
-      <div class="table-scroll">
-      <table>
-        <thead><tr>
-          <th>日期</th><th>品牌</th><th>品名</th><th>單價</th><th>數量</th><th>小計</th><th>備註</th><th></th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+    listWrap.innerHTML = pageItems.map(p => `
+      <div class="list-row">
+        <div class="lr-main">
+          <div class="lr-title">${p.name}</div>
+          <div class="lr-sub">${p.date} ・ 數量 ${p.qty} × NT$ ${Number(p.price).toLocaleString()}</div>
+        </div>
+        <div class="lr-total money">NT$ ${Number(p.total).toLocaleString()}</div>
+        <button class="del-btn" onclick="deletePurchase('${p.id}')">刪除</button>
       </div>
+    `).join('');
+
+    pageWrap.innerHTML = `
+      <button class="page-btn" onclick="changePurchasePage(-1)" ${purchasePage<=1?'disabled':''}>‹ 上一頁</button>
+      <span class="page-info">第 ${purchasePage}／${totalPages} 頁（共 ${sorted.length} 筆）</span>
+      <button class="page-btn" onclick="changePurchasePage(1)" ${purchasePage>=totalPages?'disabled':''}>下一頁 ›</button>
     `;
   }
 
-  const totalSpend = purchases.reduce((s,p)=> s + p.price*p.qty, 0);
-  const brandCount = new Set(purchases.map(p=>p.brand)).size;
+  const totalSpend = purchases.reduce((s,p)=> s + (Number(p.total)||0), 0);
+  const productCount = new Set(purchases.map(p=>p.name)).size;
   document.getElementById('buyStats').innerHTML = `
     <div class="stat"><div class="num">NT$ ${totalSpend.toLocaleString()}</div><div class="label">累計花費</div></div>
     <div class="stat"><div class="num">${purchases.length}</div><div class="label">購買筆數</div></div>
-    <div class="stat"><div class="num">${brandCount}</div><div class="label">品牌數</div></div>
+    <div class="stat"><div class="num">${productCount}</div><div class="label">商品種類</div></div>
   `;
 }
 
@@ -626,17 +712,16 @@ function renderUseItemOptions(){
     sel.innerHTML = '<option value="">請先於「購買紀錄」新增品項</option>';
     return;
   }
-  const uniqueItems = [];
+  const uniqueNames = [];
   const seen = new Set();
   purchases.slice().reverse().forEach(p=>{
-    const key = p.brand + ' ' + p.name;
-    if(!seen.has(key)){ seen.add(key); uniqueItems.push(key); }
+    if(!seen.has(p.name)){ seen.add(p.name); uniqueNames.push(p.name); }
   });
-  sel.innerHTML = uniqueItems.map(k=>`<option value="${k}">${k}</option>`).join('');
+  sel.innerHTML = uniqueNames.map(n=>`<option value="${n}">${n}</option>`).join('');
 }
 
 // ---- usage ----
-function addUsage(){
+async function addUsage(){
   const date = document.getElementById('use-date').value;
   const time = document.getElementById('use-time').value;
   const item = document.getElementById('use-item').value;
@@ -644,74 +729,183 @@ function addUsage(){
   const note = document.getElementById('use-note').value.trim();
 
   if(!date || !item){
-    alert('請至少填寫日期與品牌／品名');
+    alert('請至少填寫日期與商品名稱');
     return;
   }
 
-  usages.push({
-    id: usageSeq++,
-    date, time, item, dose, note,
-    reactions: Array.from(selectedReactions)
-  });
-
-  selectedReactions.clear();
-  renderChips();
-  document.getElementById('use-dose').value = '';
-  document.getElementById('use-note').value = '';
-
-  renderUsages();
-  saveUsages();
+  setSyncStatus('儲存中…', false);
+  try {
+    await db.collection('users').doc(currentUid).collection('usages').add({
+      date, time, item, dose, note,
+      reactions: Array.from(selectedReactions),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    selectedReactions.clear();
+    renderChips();
+    document.getElementById('use-dose').value = '';
+    document.getElementById('use-note').value = '';
+    setSyncStatus('已同步雲端', false);
+  } catch(err){
+    console.error('新增服用紀錄失敗', err);
+    setSyncStatus('雲端寫入失敗，請確認網路與規則設定', true);
+  }
 }
 
-function deleteUsage(id){
-  usages = usages.filter(u=>u.id !== id);
-  renderUsages();
-  saveUsages();
+async function deleteUsage(id){
+  setSyncStatus('儲存中…', false);
+  try {
+    await db.collection('users').doc(currentUid).collection('usages').doc(id).delete();
+    setSyncStatus('已同步雲端', false);
+  } catch(err){
+    console.error('刪除服用紀錄失敗', err);
+    setSyncStatus('雲端刪除失敗', true);
+  }
 }
 
 function renderUsages(){
-  const wrap = document.getElementById('useTableWrap');
-  if(usages.length === 0){
-    wrap.innerHTML = '<div class="empty">還沒有服用紀錄，於上方表單新增第一筆吧。</div>';
-  } else {
-    const rows = usages.slice().reverse().map(u=>{
-      const badges = u.reactions.map(r=>{
-        const opt = reactionOptions.find(o=>o.key===r);
-        const cls = opt ? badgeClass(opt.type.replace('neutral-grey','grey')) : 'b-grey';
-        return `<span class="badge ${cls}">${r}</span>`;
-      }).join('') || '<span style="color:var(--ink-soft); font-size:12px;">未記錄</span>';
-      return `
-        <tr>
-          <td>${u.date}${u.time ? ' ' + u.time : ''}</td>
-          <td>${u.item}</td>
-          <td>${u.dose || '—'}</td>
-          <td>${badges}</td>
-          <td>${u.note || '—'}</td>
-          <td><button class="del-btn" onclick="deleteUsage(${u.id})">刪除</button></td>
-        </tr>
-      `;
-    }).join('');
-    wrap.innerHTML = `
-      <div class="table-scroll">
-      <table>
-        <thead><tr>
-          <th>日期時間</th><th>品項</th><th>劑量</th><th>身體反應</th><th>備註</th><th></th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      </div>
-    `;
-  }
-
   const total = usages.length;
-  const badCount = usages.filter(u=>u.reactions.some(r=>reactionOptions.find(o=>o.key===r)?.type==='bad')).length;
-  const goodCount = usages.filter(u=>u.reactions.some(r=>reactionOptions.find(o=>o.key===r)?.type==='good')).length;
+  const badCount = usages.filter(u=>(u.reactions||[]).some(r=>reactionOptions.find(o=>o.key===r)?.type==='bad')).length;
+  const goodCount = usages.filter(u=>(u.reactions||[]).some(r=>reactionOptions.find(o=>o.key===r)?.type==='good')).length;
   const badRate = total ? Math.round(badCount/total*100) : 0;
 
   document.getElementById('useStats').innerHTML = `
     <div class="stat"><div class="num">${total}</div><div class="label">服用筆數</div></div>
     <div class="stat"><div class="num">${badRate}%</div><div class="label">不適發生率</div></div>
     <div class="stat"><div class="num">${goodCount}</div><div class="label">正向反應次數</div></div>
+  `;
+
+  renderCalendar();
+}
+
+// ---- 月曆 ----
+function changeMonth(delta){
+  calMonth += delta;
+  if(calMonth < 0){ calMonth = 11; calYear--; }
+  if(calMonth > 11){ calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+function selectDate(dateStr){
+  selectedDate = dateStr;
+  renderCalendar();
+}
+
+function dayIndicatorColor(entries){
+  if(entries.some(u => (u.reactions||[]).some(r => reactionOptions.find(o=>o.key===r)?.type==='bad'))) return 'var(--red)';
+  return 'var(--teal)';
+}
+
+function renderCalendar(){
+  const grid = document.getElementById('calGrid');
+  const title = document.getElementById('calTitle');
+  if(!grid || !title) return;
+  title.textContent = `${calYear}年 ${calMonth+1}月`;
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const startWeekday = firstDay.getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  const dow = ['日','一','二','三','四','五','六'];
+  let html = dow.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+  for(let i=0; i<startWeekday; i++){
+    html += `<div class="cal-cell blank"></div>`;
+  }
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const entries = usages.filter(u=>u.date === dateStr);
+    const isToday = dateStr === todayStr;
+    const isSelected = dateStr === selectedDate;
+    const color = dayIndicatorColor(entries);
+    html += `
+      <div class="cal-cell ${isToday?'today':''} ${isSelected?'selected':''}" onclick="selectDate('${dateStr}')">
+        <div>${d}</div>
+        ${entries.length>0 ? `<div class="cal-count" style="background:${color}">${entries.length}</div>` : ''}
+      </div>
+    `;
+  }
+
+  grid.innerHTML = html;
+  renderSelectedDayList();
+}
+
+function renderSelectedDayList(){
+  const wrap = document.getElementById('calDayDetail');
+  if(!wrap) return;
+  const entries = usages.filter(u=>u.date === selectedDate);
+
+  if(entries.length === 0){
+    wrap.innerHTML = `<h3>${selectedDate}</h3><div class="empty">這天沒有服用紀錄。</div>`;
+    return;
+  }
+
+  const rows = entries.map(u=>{
+    const badges = (u.reactions||[]).map(r=>{
+      const opt = reactionOptions.find(o=>o.key===r);
+      const cls = opt ? badgeClass(opt.type.replace('neutral-grey','grey')) : 'b-grey';
+      return `<span class="badge ${cls}">${r}</span>`;
+    }).join('') || '<span style="color:var(--ink-soft); font-size:12px;">未記錄</span>';
+    return `
+      <div class="list-row">
+        <div class="lr-main">
+          <div class="lr-title">${u.item}${u.time ? ' ・ ' + u.time : ''}</div>
+          <div class="lr-sub">${u.dose ? '劑量 ' + u.dose : ''}</div>
+          <div class="lr-sub">${badges}</div>
+          ${u.note ? `<div class="lr-sub">${u.note}</div>` : ''}
+        </div>
+        <button class="del-btn" onclick="deleteUsage('${u.id}')">刪除</button>
+      </div>
+    `;
+  }).join('');
+
+  wrap.innerHTML = `<h3>${selectedDate}</h3>${rows}`;
+}
+
+// ---- 商品庫存 ----
+function renderStock(){
+  const wrap = document.getElementById('stockWrap');
+  if(!wrap) return;
+
+  const productMap = {};
+  purchases.forEach(p=>{
+    if(!productMap[p.name]) productMap[p.name] = 0;
+    productMap[p.name] += Number(p.qty) || 0;
+  });
+
+  const usageCountMap = {};
+  usages.forEach(u=>{
+    usageCountMap[u.item] = (usageCountMap[u.item] || 0) + 1;
+  });
+
+  const names = Object.keys(productMap);
+  if(names.length === 0){
+    wrap.innerHTML = '<div class="empty">還沒有購買紀錄，無法計算庫存。</div>';
+    return;
+  }
+
+  const rows = names.sort((a,b)=>a.localeCompare(b, 'zh-Hant')).map(name=>{
+    const bought = productMap[name];
+    const used = usageCountMap[name] || 0;
+    const remain = bought - used;
+    const color = remain <= 0 ? 'var(--red)' : (remain <= 3 ? 'var(--amber)' : 'var(--teal)');
+    return `
+      <tr>
+        <td>${name}</td>
+        <td>${bought}</td>
+        <td>${used}</td>
+        <td><span class="badge" style="background:${color}">${remain}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>商品名稱</th><th>累計採購數量</th><th>服用次數</th><th>估算剩餘</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
   `;
 }
 
@@ -724,7 +918,8 @@ function renderUsages(){
   document.getElementById('use-time').value = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
 })();
 
-loadAllData();
+updateBuyTotal();
+renderCalendar();
 </script>
 </body>
 </html>
