@@ -485,6 +485,7 @@
 
 <script>
 // ===== 請貼上 Firebase 專案設定（在 Firebase 主控台「專案設定」裡拿得到）=====
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCpsotqRmgQ56M7-Y3IkS5OyUHbcxMZ2_s",
   authDomain: "supplement-969a3.firebaseapp.com",
@@ -494,14 +495,9 @@ const firebaseConfig = {
   appId: "1:326540816293:web:d62c766b5f629f5032c24c",
   measurementId: "G-HKDK3KSB6B"
 };
-
-
-
-  //以下這段原始黨
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-  
 
 let purchases = [];
 let usages = [];
