@@ -494,9 +494,17 @@ const firebaseConfig = {
   appId: "1:326540816293:web:d62c766b5f629f5032c24c",
   measurementId: "G-HKDK3KSB6B"
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+
+// Initialize Firebase-這段是增加黨
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+
+  //以下這段原始黨
+//firebase.initializeApp(firebaseConfig);
+//const auth = firebase.auth();
+//const db = firebase.firestore();
+  
 
 let purchases = [];
 let usages = [];
