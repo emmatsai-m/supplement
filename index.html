@@ -430,6 +430,7 @@
     <div class="date-badge">
       <div id="todayBadge"></div>
       <div id="syncBadge" style="margin-top:4px; font-size:11px; color: var(--ink-soft);">雲端同步中…</div>
+      <button onclick="doLogout()" style="margin-top:6px; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:999px; padding:4px 12px; font-size:11px; cursor:pointer; font-family:inherit;">登出</button>
     </div>
   </header>
 
@@ -585,6 +586,14 @@ function setSyncStatus(text, isError){
   el.style.color = isError ? 'var(--red)' : 'var(--ink-soft)';
 }
 
+function doLogout(){
+  auth.signOut();
+}
+
+function tryLogin(){
+  const code = document.getElementById('passcodeInput').value;
+  ...
+  
 function tryLogin(){
   const code = document.getElementById('passcodeInput').value;
   const errEl = document.getElementById('loginError');
