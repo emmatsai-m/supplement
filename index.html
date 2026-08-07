@@ -346,9 +346,73 @@
     .stats{ grid-template-columns: repeat(2, 1fr); }
     .form-grid{ grid-template-columns: 1fr 1fr; }
   }
+
+  /* 登入畫面 */
+  #loginGate{
+    min-height: 100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 20px;
+  }
+  .login-card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 36px 30px;
+    max-width: 340px;
+    width: 100%;
+    text-align:center;
+  }
+  .login-card h1{ font-size:22px; margin-bottom:6px; }
+  .login-card p{ font-size:12.5px; color: var(--ink-soft); margin: 0 0 20px; }
+  .login-card input{
+    width:100%;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 11px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align:center;
+    letter-spacing: 0.05em;
+    margin-bottom: 14px;
+  }
+  .login-card input:focus{ outline: 2px solid var(--teal); outline-offset: 1px; }
+  .login-card button{
+    width:100%;
+    background: var(--ink);
+    color:#fff;
+    border:none;
+    border-radius: 999px;
+    padding: 11px;
+    font-size: 14px;
+    font-weight:600;
+    letter-spacing:0.05em;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .login-card button:hover{ background: var(--teal-deep); }
+  .login-error{
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 12px;
+    min-height: 16px;
+  }
 </style>
 </head>
 <body>
+
+<div id="loginGate">
+  <div class="login-card">
+    <h1>服用紀錄卡</h1>
+    <p>請輸入家庭通行碼以繼續</p>
+    <input type="password" id="passcodeInput" placeholder="通行碼" onkeydown="if(event.key==='Enter') tryLogin()">
+    <button onclick="tryLogin()">進入</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<div id="appContent" style="display:none;">
 <div class="wrap">
 
   <header class="top">
@@ -478,6 +542,7 @@
   </section>
 
 </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -485,7 +550,6 @@
 
 <script>
 // ===== 請貼上 Firebase 專案設定（在 Firebase 主控台「專案設定」裡拿得到）=====
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyAZXE94WwGYSiR2UrOxzhABmNt14zFaMjE",
   authDomain: "someee-a18ab.firebaseapp.com",
@@ -494,14 +558,16 @@ const firebaseConfig = {
   messagingSenderId: "212789693257",
   appId: "1:212789693257:web:939aea98f5692496182898"
 };
-  
+
+// 要跟你在 Firebase Authentication「使用者」分頁建立的那組帳號 email 完全一樣
+const FAMILY_EMAIL = 'someetest@gmail.com';
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 let purchases = [];
 let usages = [];
-let currentUid = null;
 let purchasePage = 1;
 const PAGE_SIZE = 20;
 
@@ -519,10 +585,25 @@ function setSyncStatus(text, isError){
   el.style.color = isError ? 'var(--red)' : 'var(--ink-soft)';
 }
 
+function tryLogin(){
+  const code = document.getElementById('passcodeInput').value;
+  const errEl = document.getElementById('loginError');
+  if(!code){
+    errEl.textContent = '請輸入通行碼';
+    return;
+  }
+  errEl.textContent = '登入中…';
+  auth.signInWithEmailAndPassword(FAMILY_EMAIL, code)
+    .catch(err => {
+      console.error('登入失敗', err);
+      errEl.textContent = '通行碼錯誤，請再試一次';
+    });
+}
+
 function attachListeners(){
   setSyncStatus('雲端同步中…', false);
 
-  db.collection('users').doc(currentUid).collection('purchases')
+  db.collection('family').doc('shared').collection('purchases')
     .onSnapshot(snap => {
       purchases = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderPurchases();
@@ -534,7 +615,7 @@ function attachListeners(){
       setSyncStatus('雲端讀取失敗，請確認 Firebase 設定與規則', true);
     });
 
-  db.collection('users').doc(currentUid).collection('usages')
+  db.collection('family').doc('shared').collection('usages')
     .onSnapshot(snap => {
       usages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderUsages();
@@ -548,14 +629,13 @@ function attachListeners(){
 
 auth.onAuthStateChanged(user => {
   if(user){
-    currentUid = user.uid;
+    document.getElementById('loginGate').style.display = 'none';
+    document.getElementById('appContent').style.display = 'block';
     attachListeners();
+  } else {
+    document.getElementById('loginGate').style.display = 'flex';
+    document.getElementById('appContent').style.display = 'none';
   }
-});
-
-auth.signInAnonymously().catch(err => {
-  console.error('Firebase 登入失敗', err);
-  setSyncStatus('雲端連線失敗，請確認 Firebase 設定', true);
 });
 
 const reactionOptions = [
@@ -634,7 +714,7 @@ async function addPurchase(){
 
   setSyncStatus('儲存中…', false);
   try {
-    await db.collection('users').doc(currentUid).collection('purchases').add({
+    await db.collection('family').doc('shared').collection('purchases').add({
       date, name, qty, price, total,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -652,7 +732,7 @@ async function addPurchase(){
 async function deletePurchase(id){
   setSyncStatus('儲存中…', false);
   try {
-    await db.collection('users').doc(currentUid).collection('purchases').doc(id).delete();
+    await db.collection('family').doc('shared').collection('purchases').doc(id).delete();
     setSyncStatus('已同步雲端', false);
   } catch(err){
     console.error('刪除購買紀錄失敗', err);
@@ -736,7 +816,7 @@ async function addUsage(){
 
   setSyncStatus('儲存中…', false);
   try {
-    await db.collection('users').doc(currentUid).collection('usages').add({
+    await db.collection('family').doc('shared').collection('usages').add({
       date, time, item, dose, note,
       reactions: Array.from(selectedReactions),
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -755,7 +835,7 @@ async function addUsage(){
 async function deleteUsage(id){
   setSyncStatus('儲存中…', false);
   try {
-    await db.collection('users').doc(currentUid).collection('usages').doc(id).delete();
+    await db.collection('family').doc('shared').collection('usages').doc(id).delete();
     setSyncStatus('已同步雲端', false);
   } catch(err){
     console.error('刪除服用紀錄失敗', err);
