@@ -26,7 +26,7 @@
     -webkit-font-smoothing: antialiased;
   }
   .wrap{
-    max-width: 880px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 32px 20px 80px;
   }
@@ -64,7 +64,6 @@
     text-align:right;
   }
 
-  /* Tabs styled like a pill/capsule selector */
   .tabs{
     display:flex;
     gap:0;
@@ -77,7 +76,7 @@
   .tab-btn{
     border:none;
     background: transparent;
-    padding: 10px 22px;
+    padding: 10px 20px;
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.05em;
@@ -86,21 +85,11 @@
     font-family: inherit;
     transition: background .15s ease, color .15s ease;
   }
-  .tab-btn.active{
-    background: var(--ink);
-    color: #fff;
-  }
-  .tab-btn:not(.active):hover{
-    background: rgba(31,42,36,0.08);
-  }
+  .tab-btn.active{ background: var(--ink); color: #fff; }
+  .tab-btn:not(.active):hover{ background: rgba(31,42,36,0.08); }
 
-  section.panel{
-    display:none;
-  }
-  section.panel.active{
-    display:block;
-    animation: fade .25s ease;
-  }
+  section.panel{ display:none; }
+  section.panel.active{ display:block; animation: fade .25s ease; }
   @keyframes fade{ from{opacity:0; transform: translateY(4px);} to{opacity:1; transform:none;} }
 
   .card{
@@ -129,16 +118,8 @@
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 14px;
   }
-  .field{
-    display:flex;
-    flex-direction:column;
-    gap:5px;
-  }
-  .field label{
-    font-size: 11px;
-    color: var(--ink-soft);
-    letter-spacing: 0.06em;
-  }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size: 11px; color: var(--ink-soft); letter-spacing: 0.06em; }
   .field input, .field select{
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -148,21 +129,10 @@
     background: #fff;
     color: var(--ink);
   }
-  .field input:focus, .field select:focus{
-    outline: 2px solid var(--teal);
-    outline-offset: 1px;
-  }
-  .field input:disabled{
-    background: #F1F4F1;
-    color: var(--ink-soft);
-  }
+  .field input:focus, .field select:focus{ outline: 2px solid var(--teal); outline-offset: 1px; }
+  .field input:disabled{ background: #F1F4F1; color: var(--ink-soft); }
 
-  .chip-select{
-    grid-column: 1 / -1;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
+  .chip-select{ grid-column: 1 / -1; display:flex; flex-direction:column; gap:8px; }
   .chip-select label{ font-size:11px; color:var(--ink-soft); letter-spacing:0.06em; }
   .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
   .chip{
@@ -180,11 +150,7 @@
   .chip.on-bad{ background: var(--red); border-color: var(--red); color:#fff; }
   .chip.on-neutral{ background: var(--amber); border-color: var(--amber); color:#fff; }
 
-  .actions{
-    margin-top: 18px;
-    display:flex;
-    justify-content:flex-end;
-  }
+  .actions{ margin-top: 18px; display:flex; justify-content:flex-end; }
   button.submit{
     background: var(--ink);
     color:#fff;
@@ -199,7 +165,6 @@
   }
   button.submit:hover{ background: var(--teal-deep); }
 
-  /* summary strip */
   .stats{
     display:grid;
     grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
@@ -212,23 +177,10 @@
     background: var(--panel);
     padding: 14px 16px;
   }
-  .stat .num{
-    font-family:"Noto Serif TC", serif;
-    font-size: 22px;
-    color: var(--teal-deep);
-  }
-  .stat .label{
-    font-size: 11px;
-    color: var(--ink-soft);
-    letter-spacing: 0.05em;
-    margin-top: 2px;
-  }
+  .stat .num{ font-family:"Noto Serif TC", serif; font-size: 20px; color: var(--teal-deep); }
+  .stat .label{ font-size: 11px; color: var(--ink-soft); letter-spacing: 0.05em; margin-top: 2px; }
 
-  table{
-    width:100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
+  table{ width:100%; border-collapse: collapse; font-size: 13px; }
   thead th{
     text-align:left;
     font-size: 11px;
@@ -237,11 +189,7 @@
     padding: 8px 10px;
     border-bottom: 1.5px solid var(--ink);
   }
-  tbody td{
-    padding: 10px 10px;
-    border-bottom: 1px solid var(--line);
-    font-variant-numeric: tabular-nums;
-  }
+  tbody td{ padding: 10px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
   tbody tr:hover{ background: rgba(47,111,94,0.05); }
   .badge{
     display:inline-block;
@@ -256,27 +204,14 @@
   .b-neutral{ background: var(--amber); }
   .b-grey{ background: var(--grey-chip); }
 
-  .empty{
-    text-align:center;
-    padding: 30px 10px;
-    color: var(--ink-soft);
-    font-size: 13px;
-  }
+  .empty{ text-align:center; padding: 30px 10px; color: var(--ink-soft); font-size: 13px; }
   .money{ font-family:"Noto Serif TC", serif; }
-  .del-btn{
-    border:none; background:none; cursor:pointer;
-    color: var(--ink-soft); font-size: 12px;
-  }
+  .del-btn{ border:none; background:none; cursor:pointer; color: var(--ink-soft); font-size: 12px; }
   .del-btn:hover{ color: var(--red); }
 
-  .table-scroll{
-    width:100%;
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-  }
-  table{ min-width: 480px; }
+  .table-scroll{ width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table{ min-width: 520px; }
 
-  /* 條列式清單 */
   .list-row{
     display:flex;
     align-items:center;
@@ -287,13 +222,12 @@
   .list-row:last-child{ border-bottom:none; }
   .lr-main{ flex:1; min-width:0; }
   .lr-title{ font-size:14px; font-weight:600; }
+  .lr-title .lr-brand{ font-weight:400; color: var(--ink-soft); }
   .lr-sub{ font-size:12px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
-  .lr-total{ font-size:14px; white-space:nowrap; }
+  .lr-total{ font-size:14px; white-space:nowrap; text-align:right; }
+  .lr-total .lr-cost{ font-size:11px; color:var(--ink-soft); margin-top:2px; }
 
-  .pagination{
-    display:flex; align-items:center; justify-content:center; gap:14px;
-    margin-top:18px;
-  }
+  .pagination{ display:flex; align-items:center; justify-content:center; gap:14px; margin-top:18px; }
   .page-btn{
     border:1px solid var(--line); background:#fff; border-radius:999px;
     padding:6px 16px; font-size:12.5px; cursor:pointer; font-family:inherit; color:var(--ink);
@@ -301,37 +235,13 @@
   .page-btn:disabled{ opacity:0.4; cursor:not-allowed; }
   .page-info{ font-size:12.5px; color:var(--ink-soft); }
 
-  /* 月曆 */
-  .cal-nav{ display:flex; align-items:center; justify-content:center; gap:22px; margin-bottom:14px; }
-  .cal-title{ font-family:"Noto Serif TC", serif; font-size:16px; min-width:110px; text-align:center; }
-  .cal-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; }
-  .cal-dow{ font-size:11px; color:var(--ink-soft); text-align:center; padding-bottom:4px; }
-  .cal-cell{
-    aspect-ratio: 1 / 1;
-    border:1px solid var(--line); border-radius:10px;
-    padding:6px 4px; cursor:pointer; background:#fff;
-    display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:4px;
-    font-size:12px;
-    transition: background .12s ease, color .12s ease;
-  }
-  .cal-cell:hover{ border-color: var(--teal); }
-  .cal-cell.blank{ visibility:hidden; cursor:default; }
-  .cal-cell.today{ border-color:var(--teal); border-width:1.5px; }
-  .cal-cell.selected{ background:var(--ink); color:#fff; border-color:var(--ink); }
-  .cal-count{
-    min-width:16px; height:16px; border-radius:999px; color:#fff; font-size:10px;
-    display:flex; align-items:center; justify-content:center; padding:0 4px;
-  }
-  .cal-day-detail{ margin-top:20px; border-top:1px solid var(--line); padding-top:14px; }
-  .cal-day-detail h3{ font-size:13px; margin:0 0 10px; color:var(--ink-soft); font-weight:600; letter-spacing:0.04em; }
+  .item-card{ margin-bottom:16px; }
+  .item-card .stats{ margin-bottom:14px; }
+  .best-row{ background: rgba(47,111,94,0.08); }
 
   @media (max-width: 700px){
     .wrap{ padding: 20px 14px 60px; }
-    header.top{
-      flex-direction:column;
-      align-items:flex-start;
-      gap:10px;
-    }
+    header.top{ flex-direction:column; align-items:flex-start; gap:10px; }
     .date-badge{ text-align:left; }
     h1{ font-size:22px; }
     .tabs{ width:100%; }
@@ -339,22 +249,13 @@
     .card{ padding: 16px 16px; }
     .actions{ justify-content:stretch; }
     button.submit{ width:100%; }
-    .cal-title{ font-size:14px; min-width:90px; }
   }
-
   @media (max-width: 420px){
     .stats{ grid-template-columns: repeat(2, 1fr); }
     .form-grid{ grid-template-columns: 1fr 1fr; }
   }
 
-  /* 登入畫面 */
-  #loginGate{
-    min-height: 100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding: 20px;
-  }
+  #loginGate{ min-height: 100vh; display:flex; align-items:center; justify-content:center; padding: 20px; }
   .login-card{
     background: var(--panel);
     border: 1px solid var(--line);
@@ -392,12 +293,7 @@
     font-family:inherit;
   }
   .login-card button:hover{ background: var(--teal-deep); }
-  .login-error{
-    font-size: 12px;
-    color: var(--red);
-    margin-top: 12px;
-    min-height: 16px;
-  }
+  .login-error{ font-size: 12px; color: var(--red); margin-top: 12px; min-height: 16px; }
 </style>
 </head>
 <body>
@@ -437,7 +333,7 @@
   <div class="tabs" style="margin-bottom:24px;">
     <button class="tab-btn active" data-tab="buy">購買紀錄</button>
     <button class="tab-btn" data-tab="use">服用紀錄</button>
-    <button class="tab-btn" data-tab="stock">商品庫存</button>
+    <button class="tab-btn" data-tab="stock">庫存／比價</button>
   </div>
 
   <!-- 購買紀錄 -->
@@ -452,20 +348,36 @@
           <input type="date" id="buy-date">
         </div>
         <div class="field" style="grid-column: span 2;">
-          <label>商品名稱</label>
-          <input type="text" id="buy-name" placeholder="例如：善存 綜合維他命">
+          <label>品項（用於比價分類，例如：綜合維他命C）</label>
+          <input type="text" id="buy-item" placeholder="例如：綜合維他命C">
         </div>
         <div class="field">
-          <label>數量</label>
-          <input type="number" id="buy-qty" min="1" step="1" value="1" oninput="updateBuyTotal()">
+          <label>品牌</label>
+          <input type="text" id="buy-brand" placeholder="例如：善存">
+        </div>
+        <div class="field" style="grid-column: span 2;">
+          <label>規格／劑量（選填）</label>
+          <input type="text" id="buy-spec" placeholder="例如：500mg，60顆裝">
         </div>
         <div class="field">
-          <label>單價（元）</label>
-          <input type="number" id="buy-price" min="0" step="1" placeholder="0" oninput="updateBuyTotal()">
+          <label>每瓶／罐顆數</label>
+          <input type="number" id="buy-units" min="1" step="1" placeholder="例如 100" oninput="updateBuyCalc()">
         </div>
         <div class="field">
-          <label>總價（自動計算）</label>
-          <input type="text" id="buy-total" value="NT$ 0" disabled>
+          <label>購買數量（瓶／罐）</label>
+          <input type="number" id="buy-qty" min="1" step="1" value="1" oninput="updateBuyCalc()">
+        </div>
+        <div class="field">
+          <label>總價（元）</label>
+          <input type="number" id="buy-total" min="0" step="1" placeholder="0" oninput="updateBuyCalc()">
+        </div>
+        <div class="field">
+          <label>每瓶單價（自動）</label>
+          <input type="text" id="buy-unitprice-display" disabled value="NT$ 0">
+        </div>
+        <div class="field">
+          <label>每顆成本（自動）</label>
+          <input type="text" id="buy-costperpiece-display" disabled value="—">
         </div>
       </div>
       <div class="actions">
@@ -496,14 +408,18 @@
           <input type="time" id="use-time">
         </div>
         <div class="field" style="grid-column: span 2;">
-          <label>商品名稱</label>
+          <label>品項</label>
           <select id="use-item">
             <option value="">請先於「購買紀錄」新增品項</option>
           </select>
         </div>
         <div class="field">
-          <label>劑量</label>
-          <input type="text" id="use-dose" placeholder="例如：2錠">
+          <label>服用顆數</label>
+          <input type="number" id="use-qty" min="0.5" step="0.5" value="1">
+        </div>
+        <div class="field">
+          <label>劑量說明（選填）</label>
+          <input type="text" id="use-dose" placeholder="例如：隨餐服用">
         </div>
         <div class="chip-select">
           <label>身體反應（可複選）</label>
@@ -520,26 +436,21 @@
     </div>
 
     <div class="card">
-      <h2><span class="dot"></span>服用紀錄（月曆）</h2>
-      <div class="cal-nav">
-        <button class="page-btn" onclick="changeMonth(-1)">‹ 上個月</button>
-        <div class="cal-title" id="calTitle"></div>
-        <button class="page-btn" onclick="changeMonth(1)">下個月 ›</button>
-      </div>
-      <div class="cal-grid" id="calGrid"></div>
-      <div class="cal-day-detail" id="calDayDetail"></div>
+      <h2><span class="dot"></span>服用歷程</h2>
+      <div id="useListWrap"></div>
+      <div class="pagination" id="usePagination"></div>
     </div>
   </section>
 
-  <!-- 商品庫存 -->
+  <!-- 商品庫存／比價 -->
   <section class="panel" id="panel-stock">
     <div class="card">
-      <h2><span class="dot"></span>商品庫存</h2>
-      <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 16px; line-height:1.6;">
-        剩餘庫存為估算值：以該商品累計採購數量，扣除服用紀錄筆數計算（假設每筆服用紀錄消耗 1 份採購單位，非精確庫存）。
+      <h2><span class="dot"></span>庫存與比價說明</h2>
+      <p style="font-size:12.5px; color:var(--ink-soft); margin:0; line-height:1.6;">
+        以「品項」分組：累計購買顆數扣除服用顆數為估算庫存（非精確值）；同一品項底下列出所有採購批次，依「每顆成本」由低到高排序，成本最低的批次會用底色標示，方便比較不同品牌／時間點的性價比。
       </p>
-      <div id="stockWrap"></div>
     </div>
+    <div id="stockWrap"></div>
   </section>
 
 </div>
@@ -570,15 +481,8 @@ const db = firebase.firestore();
 let purchases = [];
 let usages = [];
 let purchasePage = 1;
+let usePage = 1;
 const PAGE_SIZE = 20;
-
-let calYear, calMonth, selectedDate;
-(function initCalendarState(){
-  const now = new Date();
-  calYear = now.getFullYear();
-  calMonth = now.getMonth();
-  selectedDate = now.toISOString().slice(0,10);
-})();
 
 function setSyncStatus(text, isError){
   const el = document.getElementById('syncBadge');
@@ -677,7 +581,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   });
 });
 
-// ---- reaction chips render ----
+// ---- reaction chips ----
 function renderChips(){
   const row = document.getElementById('reactionChips');
   row.innerHTML = '';
@@ -699,34 +603,44 @@ function renderChips(){
 renderChips();
 
 // ---- purchase ----
-function updateBuyTotal(){
+function updateBuyCalc(){
+  const units = parseFloat(document.getElementById('buy-units').value) || 0;
   const qty = parseFloat(document.getElementById('buy-qty').value) || 0;
-  const price = parseFloat(document.getElementById('buy-price').value) || 0;
-  document.getElementById('buy-total').value = 'NT$ ' + (qty*price).toLocaleString();
+  const total = parseFloat(document.getElementById('buy-total').value) || 0;
+  const unitPrice = qty > 0 ? total / qty : 0;
+  const totalPieces = units * qty;
+  const costPerPiece = totalPieces > 0 ? total / totalPieces : 0;
+  document.getElementById('buy-unitprice-display').value = 'NT$ ' + unitPrice.toFixed(1);
+  document.getElementById('buy-costperpiece-display').value = totalPieces > 0 ? ('NT$ ' + costPerPiece.toFixed(2) + ' /顆') : '—';
 }
 
 async function addPurchase(){
   const date = document.getElementById('buy-date').value;
-  const name = document.getElementById('buy-name').value.trim();
-  const qty = parseInt(document.getElementById('buy-qty').value) || 1;
-  const price = parseFloat(document.getElementById('buy-price').value) || 0;
-  const total = qty * price;
+  const itemName = document.getElementById('buy-item').value.trim();
+  const brand = document.getElementById('buy-brand').value.trim();
+  const spec = document.getElementById('buy-spec').value.trim();
+  const unitsPerContainer = parseFloat(document.getElementById('buy-units').value) || 0;
+  const containerQty = parseInt(document.getElementById('buy-qty').value) || 1;
+  const totalPrice = parseFloat(document.getElementById('buy-total').value) || 0;
 
-  if(!date || !name){
-    alert('請至少填寫日期與商品名稱');
+  if(!date || !itemName || !brand || unitsPerContainer <= 0 || containerQty <= 0){
+    alert('請至少填寫日期、品項、品牌、每瓶顆數與購買數量');
     return;
   }
 
   setSyncStatus('儲存中…', false);
   try {
     await db.collection('family').doc('shared').collection('purchases').add({
-      date, name, qty, price, total,
+      date, itemName, brand, spec, unitsPerContainer, containerQty, totalPrice,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    document.getElementById('buy-name').value = '';
-    document.getElementById('buy-price').value = '';
+    document.getElementById('buy-item').value = '';
+    document.getElementById('buy-brand').value = '';
+    document.getElementById('buy-spec').value = '';
+    document.getElementById('buy-units').value = '';
     document.getElementById('buy-qty').value = 1;
-    updateBuyTotal();
+    document.getElementById('buy-total').value = '';
+    updateBuyCalc();
     setSyncStatus('已同步雲端', false);
   } catch(err){
     console.error('新增購買紀錄失敗', err);
@@ -765,16 +679,27 @@ function renderPurchases(){
     listWrap.innerHTML = '<div class="empty">還沒有購買紀錄，於上方表單新增第一筆吧。</div>';
     pageWrap.innerHTML = '';
   } else {
-    listWrap.innerHTML = pageItems.map(p => `
-      <div class="list-row">
-        <div class="lr-main">
-          <div class="lr-title">${p.name}</div>
-          <div class="lr-sub">${p.date} ・ 數量 ${p.qty} × NT$ ${Number(p.price).toLocaleString()}</div>
+    listWrap.innerHTML = pageItems.map(p=>{
+      const units = Number(p.unitsPerContainer) || 0;
+      const qty = Number(p.containerQty) || 0;
+      const total = Number(p.totalPrice) || 0;
+      const pieces = units * qty;
+      const costPerPiece = pieces > 0 ? total / pieces : 0;
+      return `
+        <div class="list-row">
+          <div class="lr-main">
+            <div class="lr-title">${p.itemName} <span class="lr-brand">・ ${p.brand}</span></div>
+            <div class="lr-sub">${p.date}${p.spec ? ' ・ ' + p.spec : ''}</div>
+            <div class="lr-sub">${qty} 瓶 × ${units} 顆／瓶</div>
+          </div>
+          <div class="lr-total">
+            <div class="money">NT$ ${total.toLocaleString()}</div>
+            <div class="lr-cost">${pieces>0 ? 'NT$ ' + costPerPiece.toFixed(2) + ' /顆' : ''}</div>
+          </div>
+          <button class="del-btn" onclick="deletePurchase('${p.id}')">刪除</button>
         </div>
-        <div class="lr-total money">NT$ ${Number(p.total).toLocaleString()}</div>
-        <button class="del-btn" onclick="deletePurchase('${p.id}')">刪除</button>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     pageWrap.innerHTML = `
       <button class="page-btn" onclick="changePurchasePage(-1)" ${purchasePage<=1?'disabled':''}>‹ 上一頁</button>
@@ -783,17 +708,18 @@ function renderPurchases(){
     `;
   }
 
-  const totalSpend = purchases.reduce((s,p)=> s + (Number(p.total)||0), 0);
-  const productCount = new Set(purchases.map(p=>p.name)).size;
+  const totalSpend = purchases.reduce((s,p)=> s + (Number(p.totalPrice)||0), 0);
+  const itemCount = new Set(purchases.map(p=>p.itemName)).size;
   document.getElementById('buyStats').innerHTML = `
     <div class="stat"><div class="num">NT$ ${totalSpend.toLocaleString()}</div><div class="label">累計花費</div></div>
-    <div class="stat"><div class="num">${purchases.length}</div><div class="label">購買筆數</div></div>
-    <div class="stat"><div class="num">${productCount}</div><div class="label">商品種類</div></div>
+    <div class="stat"><div class="num">${purchases.length}</div><div class="label">採購筆數</div></div>
+    <div class="stat"><div class="num">${itemCount}</div><div class="label">品項種類</div></div>
   `;
 }
 
 function renderUseItemOptions(){
   const sel = document.getElementById('use-item');
+  const prevValue = sel.value;
   if(purchases.length === 0){
     sel.innerHTML = '<option value="">請先於「購買紀錄」新增品項</option>';
     return;
@@ -801,28 +727,30 @@ function renderUseItemOptions(){
   const uniqueNames = [];
   const seen = new Set();
   purchases.slice().reverse().forEach(p=>{
-    if(!seen.has(p.name)){ seen.add(p.name); uniqueNames.push(p.name); }
+    if(!seen.has(p.itemName)){ seen.add(p.itemName); uniqueNames.push(p.itemName); }
   });
   sel.innerHTML = uniqueNames.map(n=>`<option value="${n}">${n}</option>`).join('');
+  if(uniqueNames.includes(prevValue)) sel.value = prevValue;
 }
 
 // ---- usage ----
 async function addUsage(){
   const date = document.getElementById('use-date').value;
   const time = document.getElementById('use-time').value;
-  const item = document.getElementById('use-item').value;
+  const itemName = document.getElementById('use-item').value;
+  const qty = parseFloat(document.getElementById('use-qty').value) || 1;
   const dose = document.getElementById('use-dose').value.trim();
   const note = document.getElementById('use-note').value.trim();
 
-  if(!date || !item){
-    alert('請至少填寫日期與商品名稱');
+  if(!date || !itemName){
+    alert('請至少填寫日期與品項');
     return;
   }
 
   setSyncStatus('儲存中…', false);
   try {
     await db.collection('family').doc('shared').collection('usages').add({
-      date, time, item, dose, note,
+      date, time, itemName, qty, dose, note,
       reactions: Array.from(selectedReactions),
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -830,6 +758,7 @@ async function addUsage(){
     renderChips();
     document.getElementById('use-dose').value = '';
     document.getElementById('use-note').value = '';
+    document.getElementById('use-qty').value = 1;
     setSyncStatus('已同步雲端', false);
   } catch(err){
     console.error('新增服用紀錄失敗', err);
@@ -848,7 +777,52 @@ async function deleteUsage(id){
   }
 }
 
+function changeUsePage(delta){
+  usePage += delta;
+  renderUsages();
+}
+
 function renderUsages(){
+  const listWrap = document.getElementById('useListWrap');
+  const pageWrap = document.getElementById('usePagination');
+
+  const sorted = usages.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.time||'').localeCompare(a.time||''));
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  if(usePage > totalPages) usePage = totalPages;
+  if(usePage < 1) usePage = 1;
+  const startIdx = (usePage - 1) * PAGE_SIZE;
+  const pageItems = sorted.slice(startIdx, startIdx + PAGE_SIZE);
+
+  if(sorted.length === 0){
+    listWrap.innerHTML = '<div class="empty">還沒有服用紀錄，於上方表單新增第一筆吧。</div>';
+    pageWrap.innerHTML = '';
+  } else {
+    listWrap.innerHTML = pageItems.map(u=>{
+      const badges = (u.reactions||[]).map(r=>{
+        const opt = reactionOptions.find(o=>o.key===r);
+        const cls = opt ? badgeClass(opt.type.replace('neutral-grey','grey')) : 'b-grey';
+        return `<span class="badge ${cls}">${r}</span>`;
+      }).join('') || '<span style="color:var(--ink-soft); font-size:12px;">未記錄</span>';
+      return `
+        <div class="list-row">
+          <div class="lr-main">
+            <div class="lr-title">${u.itemName}${u.time ? ' ・ ' + u.time : ''}</div>
+            <div class="lr-sub">${u.date} ・ ${u.qty || 1} 顆${u.dose ? ' ・ ' + u.dose : ''}</div>
+            <div class="lr-sub">${badges}</div>
+            ${u.note ? `<div class="lr-sub">${u.note}</div>` : ''}
+          </div>
+          <button class="del-btn" onclick="deleteUsage('${u.id}')">刪除</button>
+        </div>
+      `;
+    }).join('');
+
+    pageWrap.innerHTML = `
+      <button class="page-btn" onclick="changeUsePage(-1)" ${usePage<=1?'disabled':''}>‹ 上一頁</button>
+      <span class="page-info">第 ${usePage}／${totalPages} 頁（共 ${sorted.length} 筆）</span>
+      <button class="page-btn" onclick="changeUsePage(1)" ${usePage>=totalPages?'disabled':''}>下一頁 ›</button>
+    `;
+  }
+
   const total = usages.length;
   const badCount = usages.filter(u=>(u.reactions||[]).some(r=>reactionOptions.find(o=>o.key===r)?.type==='bad')).length;
   const goodCount = usages.filter(u=>(u.reactions||[]).some(r=>reactionOptions.find(o=>o.key===r)?.type==='good')).length;
@@ -859,140 +833,72 @@ function renderUsages(){
     <div class="stat"><div class="num">${badRate}%</div><div class="label">不適發生率</div></div>
     <div class="stat"><div class="num">${goodCount}</div><div class="label">正向反應次數</div></div>
   `;
-
-  renderCalendar();
 }
 
-// ---- 月曆 ----
-function changeMonth(delta){
-  calMonth += delta;
-  if(calMonth < 0){ calMonth = 11; calYear--; }
-  if(calMonth > 11){ calMonth = 0; calYear++; }
-  renderCalendar();
-}
-
-function selectDate(dateStr){
-  selectedDate = dateStr;
-  renderCalendar();
-}
-
-function dayIndicatorColor(entries){
-  if(entries.some(u => (u.reactions||[]).some(r => reactionOptions.find(o=>o.key===r)?.type==='bad'))) return 'var(--red)';
-  return 'var(--teal)';
-}
-
-function renderCalendar(){
-  const grid = document.getElementById('calGrid');
-  const title = document.getElementById('calTitle');
-  if(!grid || !title) return;
-  title.textContent = `${calYear}年 ${calMonth+1}月`;
-
-  const firstDay = new Date(calYear, calMonth, 1);
-  const startWeekday = firstDay.getDay();
-  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-  const todayStr = new Date().toISOString().slice(0,10);
-
-  const dow = ['日','一','二','三','四','五','六'];
-  let html = dow.map(d=>`<div class="cal-dow">${d}</div>`).join('');
-
-  for(let i=0; i<startWeekday; i++){
-    html += `<div class="cal-cell blank"></div>`;
-  }
-  for(let d=1; d<=daysInMonth; d++){
-    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const entries = usages.filter(u=>u.date === dateStr);
-    const isToday = dateStr === todayStr;
-    const isSelected = dateStr === selectedDate;
-    const color = dayIndicatorColor(entries);
-    html += `
-      <div class="cal-cell ${isToday?'today':''} ${isSelected?'selected':''}" onclick="selectDate('${dateStr}')">
-        <div>${d}</div>
-        ${entries.length>0 ? `<div class="cal-count" style="background:${color}">${entries.length}</div>` : ''}
-      </div>
-    `;
-  }
-
-  grid.innerHTML = html;
-  renderSelectedDayList();
-}
-
-function renderSelectedDayList(){
-  const wrap = document.getElementById('calDayDetail');
-  if(!wrap) return;
-  const entries = usages.filter(u=>u.date === selectedDate);
-
-  if(entries.length === 0){
-    wrap.innerHTML = `<h3>${selectedDate}</h3><div class="empty">這天沒有服用紀錄。</div>`;
-    return;
-  }
-
-  const rows = entries.map(u=>{
-    const badges = (u.reactions||[]).map(r=>{
-      const opt = reactionOptions.find(o=>o.key===r);
-      const cls = opt ? badgeClass(opt.type.replace('neutral-grey','grey')) : 'b-grey';
-      return `<span class="badge ${cls}">${r}</span>`;
-    }).join('') || '<span style="color:var(--ink-soft); font-size:12px;">未記錄</span>';
-    return `
-      <div class="list-row">
-        <div class="lr-main">
-          <div class="lr-title">${u.item}${u.time ? ' ・ ' + u.time : ''}</div>
-          <div class="lr-sub">${u.dose ? '劑量 ' + u.dose : ''}</div>
-          <div class="lr-sub">${badges}</div>
-          ${u.note ? `<div class="lr-sub">${u.note}</div>` : ''}
-        </div>
-        <button class="del-btn" onclick="deleteUsage('${u.id}')">刪除</button>
-      </div>
-    `;
-  }).join('');
-
-  wrap.innerHTML = `<h3>${selectedDate}</h3>${rows}`;
-}
-
-// ---- 商品庫存 ----
+// ---- 庫存／比價 ----
 function renderStock(){
   const wrap = document.getElementById('stockWrap');
   if(!wrap) return;
 
-  const productMap = {};
+  const itemMap = {};
   purchases.forEach(p=>{
-    if(!productMap[p.name]) productMap[p.name] = 0;
-    productMap[p.name] += Number(p.qty) || 0;
+    const units = Number(p.unitsPerContainer) || 0;
+    const qty = Number(p.containerQty) || 0;
+    const total = Number(p.totalPrice) || 0;
+    const pieces = units * qty;
+    const costPerPiece = pieces > 0 ? total / pieces : 0;
+    if(!itemMap[p.itemName]) itemMap[p.itemName] = { batches: [], totalPieces: 0 };
+    itemMap[p.itemName].batches.push({ ...p, pieces, costPerPiece });
+    itemMap[p.itemName].totalPieces += pieces;
   });
 
-  const usageCountMap = {};
+  const usedQtyMap = {};
   usages.forEach(u=>{
-    usageCountMap[u.item] = (usageCountMap[u.item] || 0) + 1;
+    usedQtyMap[u.itemName] = (usedQtyMap[u.itemName] || 0) + (Number(u.qty) || 1);
   });
 
-  const names = Object.keys(productMap);
+  const names = Object.keys(itemMap);
   if(names.length === 0){
-    wrap.innerHTML = '<div class="empty">還沒有購買紀錄，無法計算庫存。</div>';
+    wrap.innerHTML = '<div class="card"><div class="empty">還沒有購買紀錄，無法計算庫存與比價。</div></div>';
     return;
   }
 
-  const rows = names.sort((a,b)=>a.localeCompare(b, 'zh-Hant')).map(name=>{
-    const bought = productMap[name];
-    const used = usageCountMap[name] || 0;
-    const remain = bought - used;
-    const color = remain <= 0 ? 'var(--red)' : (remain <= 3 ? 'var(--amber)' : 'var(--teal)');
-    return `
-      <tr>
-        <td>${name}</td>
-        <td>${bought}</td>
-        <td>${used}</td>
-        <td><span class="badge" style="background:${color}">${remain}</span></td>
+  wrap.innerHTML = names.sort((a,b)=>a.localeCompare(b,'zh-Hant')).map(name=>{
+    const info = itemMap[name];
+    const used = usedQtyMap[name] || 0;
+    const remain = Math.round((info.totalPieces - used) * 10) / 10;
+    const remainColor = remain <= 0 ? 'var(--red)' : (remain <= 10 ? 'var(--amber)' : 'var(--teal)');
+    const sortedBatches = info.batches.slice().sort((a,b)=> a.costPerPiece - b.costPerPiece);
+    const cheapest = sortedBatches.length ? sortedBatches[0].costPerPiece : null;
+
+    const batchRows = sortedBatches.map(b=>`
+      <tr class="${cheapest!==null && b.costPerPiece===cheapest ? 'best-row' : ''}">
+        <td>${b.date}</td>
+        <td>${b.brand}</td>
+        <td>${b.spec || '—'}</td>
+        <td>${b.containerQty} 瓶 × ${b.unitsPerContainer} 顆</td>
+        <td class="money">NT$ ${Number(b.totalPrice).toLocaleString()}</td>
+        <td class="money">${b.pieces>0 ? 'NT$ ' + b.costPerPiece.toFixed(2) + ' /顆' : '—'}${cheapest!==null && b.costPerPiece===cheapest ? ' 🏆' : ''}</td>
       </tr>
+    `).join('');
+
+    return `
+      <div class="card item-card">
+        <h2><span class="dot"></span>${name}</h2>
+        <div class="stats">
+          <div class="stat"><div class="num">${Math.round(info.totalPieces)}</div><div class="label">累計購買顆數</div></div>
+          <div class="stat"><div class="num">${used}</div><div class="label">已服用顆數</div></div>
+          <div class="stat"><div class="num" style="color:${remainColor}">${remain}</div><div class="label">估算剩餘顆數</div></div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>日期</th><th>品牌</th><th>規格</th><th>數量</th><th>總價</th><th>每顆成本</th></tr></thead>
+            <tbody>${batchRows}</tbody>
+          </table>
+        </div>
+      </div>
     `;
   }).join('');
-
-  wrap.innerHTML = `
-    <div class="table-scroll">
-    <table>
-      <thead><tr><th>商品名稱</th><th>累計採購數量</th><th>服用次數</th><th>估算剩餘</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>
-  `;
 }
 
 // ---- init ----
@@ -1004,8 +910,7 @@ function renderStock(){
   document.getElementById('use-time').value = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
 })();
 
-updateBuyTotal();
-renderCalendar();
+updateBuyCalc();
 </script>
 </body>
 </html>
