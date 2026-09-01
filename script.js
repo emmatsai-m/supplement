@@ -25,6 +25,8 @@ let stockPage = 1;
 const STOCK_PAGE_SIZE = 12;
 let stockSearchTerm = '';
 let compareSearchTerm = '';
+let stockLocationFilter = '全部';
+let compareLocationFilter = '全部';
 let activeUsePanelIndex = null;
 let openDetailKeys = new Set();
 let editingBatchId = null;
@@ -62,7 +64,6 @@ function attachListeners(){
     .onSnapshot(snap => {
       purchases = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderPurchases();
-      renderLocationSuggestions();
       renderInventoryOverview();
       renderCompare();
       setSyncStatus('已同步雲端', false);
@@ -164,8 +165,8 @@ async function addPurchase(){
   const location = document.getElementById('buy-location').value.trim();
   const buyer = document.getElementById('buy-buyer').value.trim();
 
-  if(!date || !itemName || !brand || unitsPerContainer <= 0 || containerQty <= 0){
-    alert('請至少填寫日期、品項、品牌、每瓶顆數與購買數量');
+  if(!date || !itemName || !brand || unitsPerContainer <= 0 || containerQty <= 0 || !location){
+    alert('請至少填寫日期、品項、品牌、每瓶顆數、購買數量與存放地點');
     return;
   }
 
@@ -184,6 +185,7 @@ async function addPurchase(){
     document.getElementById('buy-total').value = '';
     document.getElementById('buy-expiry').value = '';
     document.getElementById('buy-location').value = '';
+    document.querySelectorAll('#buyLocationButtons .loc-btn').forEach(btn=>btn.classList.remove('active'));
     document.getElementById('buy-buyer').value = '';
     updateBuyCalc();
     setSyncStatus('已同步雲端', false);
@@ -216,8 +218,8 @@ async function saveEditBatch(id){
   const location = document.getElementById('edit-location-'+id).value.trim();
   const buyer = document.getElementById('edit-buyer-'+id).value.trim();
 
-  if(!date || !itemName || !brand || unitsPerContainer <= 0 || containerQty <= 0){
-    alert('請至少填寫日期、品項、品牌、每瓶顆數與購買數量');
+  if(!date || !itemName || !brand || unitsPerContainer <= 0 || containerQty <= 0 || !location){
+    alert('請至少填寫日期、品項、品牌、每瓶顆數、購買數量與存放地點');
     return;
   }
 
@@ -258,7 +260,12 @@ function renderBatchEditForm(b){
         <div class="field"><label>購買瓶數</label><input type="number" id="edit-qty-${b.id}" value="${b.containerQty||1}"></div>
         <div class="field"><label>總價</label><input type="number" id="edit-total-${b.id}" value="${b.totalPrice||0}"></div>
         <div class="field"><label>效期（年月）</label><input type="month" id="edit-expiry-${b.id}" value="${b.expiryMonth||''}"></div>
-        <div class="field"><label>存放地點</label><input type="text" id="edit-location-${b.id}" value="${b.location||''}"></div>
+        <div class="field"><label>存放地點</label>
+          <select id="edit-location-${b.id}">
+            <option value="台北" ${b.location==='台北'?'selected':''}>台北</option>
+            <option value="新竹" ${b.location==='新竹'?'selected':''}>新竹</option>
+          </select>
+        </div>
         <div class="field"><label>採購人</label><input type="text" id="edit-buyer-${b.id}" value="${b.buyer||''}"></div>
       </div>
       <div class="actions">
@@ -321,20 +328,17 @@ function renderPurchases(){
     `;
   }
 
-  const totalSpend = purchases.reduce((s,p)=> s + (Number(p.totalPrice)||0), 0);
   const itemCount = new Set(purchases.map(p=>p.itemName)).size;
   document.getElementById('buyStats').innerHTML = `
-    <div class="stat"><div class="num">NT$ ${totalSpend.toLocaleString()}</div><div class="label">累計花費</div></div>
-    <div class="stat"><div class="num">${purchases.length}</div><div class="label">採購筆數</div></div>
     <div class="stat"><div class="num">${itemCount}</div><div class="label">品項種類</div></div>
   `;
 }
 
-function renderLocationSuggestions(){
-  const dl = document.getElementById('locationSuggestions');
-  if(!dl) return;
-  const locs = Array.from(new Set(purchases.map(p=>p.location).filter(Boolean)));
-  dl.innerHTML = locs.map(l=>`<option value="${l}"></option>`).join('');
+function selectBuyLocation(loc){
+  document.getElementById('buy-location').value = loc;
+  document.querySelectorAll('#buyLocationButtons .loc-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.loc === loc);
+  });
 }
 
 // ---- 庫存總表 ----
@@ -378,6 +382,17 @@ function buildInventoryGroups(){
       nearestExpiry, batches: sortedByDate
     };
   }).sort((a,b)=> a.itemName.localeCompare(b.itemName,'zh-Hant') || a.location.localeCompare(b.location,'zh-Hant'));
+}
+
+function setStockLocationFilter(loc){
+  stockLocationFilter = loc;
+  stockPage = 1;
+  document.querySelectorAll('.loc-filter-btn').forEach(btn=>{
+    if(btn.id.startsWith('stockLocBtn-')){
+      btn.classList.toggle('active-filter', btn.id === 'stockLocBtn-' + loc);
+    }
+  });
+  renderInventoryOverview();
 }
 
 function clearStockSearch(){
@@ -578,6 +593,9 @@ function renderInventoryOverview(){
   if(stockSearchTerm){
     groups = groups.filter(g => g.itemName.includes(stockSearchTerm));
   }
+  if(stockLocationFilter !== '全部'){
+    groups = groups.filter(g => g.location === stockLocationFilter);
+  }
 
   if(groups.length === 0){
     wrap.innerHTML = '<div class="card"><div class="empty">還沒有庫存資料，先到「購買紀錄」新增第一筆吧。</div></div>';
@@ -629,6 +647,16 @@ function renderInventoryOverview(){
 }
 
 // ---- 性價比比較 ----
+function setCompareLocationFilter(loc){
+  compareLocationFilter = loc;
+  document.querySelectorAll('.loc-filter-btn').forEach(btn=>{
+    if(btn.id.startsWith('compareLocBtn-')){
+      btn.classList.toggle('active-filter', btn.id === 'compareLocBtn-' + loc);
+    }
+  });
+  renderCompare();
+}
+
 function clearCompareSearch(){
   document.getElementById('compareSearch').value = '';
   compareSearchTerm = '';
@@ -645,7 +673,11 @@ function renderCompare(){
   if(!wrap) return;
 
   const itemMap = {};
-  purchases.forEach(p=>{
+  const filteredPurchases = compareLocationFilter === '全部'
+    ? purchases
+    : purchases.filter(p => p.location === compareLocationFilter);
+
+  filteredPurchases.forEach(p=>{
     const units = Number(p.unitsPerContainer) || 0;
     const qty = Number(p.containerQty) || 0;
     const total = Number(p.totalPrice) || 0;

@@ -92,10 +92,13 @@
           <label>有效期限（選填，年月即可）</label>
           <input type="month" id="buy-expiry">
         </div>
-        <div class="field">
-          <label>存放地點（選填）</label>
-          <input type="text" id="buy-location" placeholder="例如：客廳、冰箱" list="locationSuggestions">
-          <datalist id="locationSuggestions"></datalist>
+        <div class="field" style="grid-column: span 2;">
+          <label>存放地點</label>
+          <div class="loc-select" id="buyLocationButtons">
+            <button type="button" class="loc-btn" data-loc="台北" onclick="selectBuyLocation('台北')">台北</button>
+            <button type="button" class="loc-btn" data-loc="新竹" onclick="selectBuyLocation('新竹')">新竹</button>
+          </div>
+          <input type="hidden" id="buy-location" value="">
         </div>
         <div class="field">
           <label>採購人（選填）</label>
@@ -126,6 +129,12 @@
       <input type="text" id="stockSearch" placeholder="搜尋品項名稱" oninput="onStockSearchInput()">
       <button class="page-btn" onclick="clearStockSearch()">✕</button>
     </div>
+    <div class="card" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <span style="font-size:12px; color:var(--ink-soft);">篩選地點：</span>
+      <button class="page-btn loc-filter-btn active-filter" id="stockLocBtn-全部" onclick="setStockLocationFilter('全部')">全部</button>
+      <button class="page-btn loc-filter-btn" id="stockLocBtn-台北" onclick="setStockLocationFilter('台北')">台北</button>
+      <button class="page-btn loc-filter-btn" id="stockLocBtn-新竹" onclick="setStockLocationFilter('新竹')">新竹</button>
+    </div>
     <div id="stockWrap"></div>
     <div class="pagination" id="stockPagination"></div>
   </section>
@@ -135,6 +144,12 @@
     <div class="card search-row">
       <input type="text" id="compareSearch" placeholder="搜尋品項名稱" oninput="onCompareSearchInput()">
       <button class="page-btn" onclick="clearCompareSearch()">✕</button>
+    </div>
+    <div class="card" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <span style="font-size:12px; color:var(--ink-soft);">篩選地點：</span>
+      <button class="page-btn loc-filter-btn active-filter" id="compareLocBtn-全部" onclick="setCompareLocationFilter('全部')">全部</button>
+      <button class="page-btn loc-filter-btn" id="compareLocBtn-台北" onclick="setCompareLocationFilter('台北')">台北</button>
+      <button class="page-btn loc-filter-btn" id="compareLocBtn-新竹" onclick="setCompareLocationFilter('新竹')">新竹</button>
     </div>
     <div id="compareWrap"></div>
   </section>
