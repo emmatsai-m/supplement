@@ -25,7 +25,6 @@
     <div class="brandmark">
       <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
         <rect x="3" y="12" width="24" height="10" rx="5" transform="rotate(-30 15 15)" stroke="#1F2A24" stroke-width="2" fill="#2F6F5E"/>
-        <line x1="15" y1="6" x2="15" y2="24" stroke="#1F2A24" stroke-width="0" />
         <path d="M9 15 L21 15" stroke="#EEF3EE" stroke-width="2" transform="rotate(-30 15 15)"/>
       </svg>
       <div>
@@ -41,9 +40,9 @@
   </header>
 
   <div class="tabs" style="margin-bottom:24px;">
-    <button class="tab-btn active" data-tab="buy">購買紀錄</button>
-    <button class="tab-btn" data-tab="use">服用紀錄</button>
-    <button class="tab-btn" data-tab="stock">庫存／比價</button>
+    <button class="tab-btn active" data-tab="buy">📋 購買紀錄</button>
+    <button class="tab-btn" data-tab="stock">📦 庫存總表</button>
+    <button class="tab-btn" data-tab="compare">🏷️ 性價比比較</button>
   </div>
 
   <!-- 購買紀錄 -->
@@ -89,6 +88,19 @@
           <label>每顆成本（自動）</label>
           <input type="text" id="buy-costperpiece-display" disabled value="—">
         </div>
+        <div class="field">
+          <label>有效期限（選填，年月即可）</label>
+          <input type="month" id="buy-expiry">
+        </div>
+        <div class="field">
+          <label>存放地點（選填）</label>
+          <input type="text" id="buy-location" placeholder="例如：客廳、冰箱" list="locationSuggestions">
+          <datalist id="locationSuggestions"></datalist>
+        </div>
+        <div class="field">
+          <label>採購人（選填）</label>
+          <input type="text" id="buy-buyer" placeholder="例如：媽媽">
+        </div>
       </div>
       <div class="actions">
         <button class="submit" onclick="addPurchase()">新增這筆購買</button>
@@ -102,65 +114,29 @@
     </div>
   </section>
 
-  <!-- 服用紀錄 -->
-  <section class="panel" id="panel-use">
-    <div class="stats" id="useStats"></div>
-
-    <div class="card">
-      <h2><span class="dot"></span>新增服用紀錄</h2>
-      <div class="form-grid">
-        <div class="field">
-          <label>日期</label>
-          <input type="date" id="use-date">
-        </div>
-        <div class="field">
-          <label>時間</label>
-          <input type="time" id="use-time">
-        </div>
-        <div class="field" style="grid-column: span 2;">
-          <label>品項</label>
-          <select id="use-item">
-            <option value="">請先於「購買紀錄」新增品項</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>服用顆數</label>
-          <input type="number" id="use-qty" min="0.5" step="0.5" value="1">
-        </div>
-        <div class="field">
-          <label>劑量說明（選填）</label>
-          <input type="text" id="use-dose" placeholder="例如：隨餐服用">
-        </div>
-        <div class="chip-select">
-          <label>身體反應（可複選）</label>
-          <div class="chip-row" id="reactionChips"></div>
-        </div>
-        <div class="field" style="grid-column: 1/-1;">
-          <label>備註</label>
-          <input type="text" id="use-note" placeholder="其他感受描述（選填）">
-        </div>
-      </div>
-      <div class="actions">
-        <button class="submit" onclick="addUsage()">新增這筆紀錄</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2><span class="dot"></span>服用歷程</h2>
-      <div id="useListWrap"></div>
-      <div class="pagination" id="usePagination"></div>
-    </div>
-  </section>
-
-  <!-- 商品庫存／比價 -->
+  <!-- 庫存總表 -->
   <section class="panel" id="panel-stock">
     <div class="card">
-      <h2><span class="dot"></span>庫存與比價說明</h2>
+      <h2><span class="dot"></span>庫存總表說明</h2>
       <p style="font-size:12.5px; color:var(--ink-soft); margin:0; line-height:1.6;">
-        以「品項」分組：累計購買顆數扣除服用顆數為估算庫存（非精確值）；同一品項底下列出所有採購批次，依「每顆成本」由低到高排序，成本最低的批次會用底色標示，方便比較不同品牌／時間點的性價比。
+        依「品項＋存放地點」分組，累計購買顆數扣除使用顆數為估算庫存（非精確值）。點「使用」記錄一次服用（同時保留身體反應追蹤），點「📋 明細」可以編輯或刪除底下每一筆採購／使用紀錄。
       </p>
     </div>
+    <div class="card search-row">
+      <input type="text" id="stockSearch" placeholder="搜尋品項名稱" oninput="onStockSearchInput()">
+      <button class="page-btn" onclick="clearStockSearch()">✕</button>
+    </div>
     <div id="stockWrap"></div>
+    <div class="pagination" id="stockPagination"></div>
+  </section>
+
+  <!-- 性價比比較 -->
+  <section class="panel" id="panel-compare">
+    <div class="card search-row">
+      <input type="text" id="compareSearch" placeholder="搜尋品項名稱" oninput="onCompareSearchInput()">
+      <button class="page-btn" onclick="clearCompareSearch()">✕</button>
+    </div>
+    <div id="compareWrap"></div>
   </section>
 
 </div>
@@ -169,7 +145,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
 <script src="script.js"></script>
 </body>
 </html>
