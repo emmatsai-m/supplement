@@ -18,7 +18,7 @@ const db = firebase.firestore();
 let purchases = [];
 let usages = [];
 let purchasePage = 1;
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 // 庫存總表的畫面狀態
 let stockPage = 1;
@@ -27,10 +27,8 @@ let stockSearchTerm = '';
 let compareSearchTerm = '';
 let stockLocationFilter = '全部';
 let compareLocationFilter = '全部';
-let activeUsePanelIndex = null;
 let openDetailKeys = new Set();
 let editingBatchId = null;
-let lastInventoryGroups = [];
 
 function setSyncStatus(text, isError){
   const el = document.getElementById('syncBadge');
@@ -175,6 +173,7 @@ async function addPurchase(){
     await db.collection('family').doc('shared').collection('purchases').add({
       date, itemName, brand, spec, unitsPerContainer, containerQty, totalPrice,
       expiryMonth, location, buyer,
+      usageStatus: '未開封', startDate: '', finishDate: '', reactions: [], feedbackNote: '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     document.getElementById('buy-item').value = '';
@@ -284,6 +283,7 @@ function changePurchasePage(delta){
 function renderPurchases(){
   const listWrap = document.getElementById('buyListWrap');
   const pageWrap = document.getElementById('buyPagination');
+  const pageWrapTop = document.getElementById('buyPaginationTop');
 
   const sorted = purchases.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||''));
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
@@ -295,6 +295,7 @@ function renderPurchases(){
   if(sorted.length === 0){
     listWrap.innerHTML = '<div class="empty">還沒有購買紀錄，於上方表單新增第一筆吧。</div>';
     pageWrap.innerHTML = '';
+    pageWrapTop.innerHTML = '';
   } else {
     listWrap.innerHTML = pageItems.map(p=>{
       if(editingBatchId === p.id) return renderBatchEditForm(p);
@@ -321,17 +322,44 @@ function renderPurchases(){
       `;
     }).join('');
 
-    pageWrap.innerHTML = `
+    const paginationHtml = `
       <button class="page-btn" onclick="changePurchasePage(-1)" ${purchasePage<=1?'disabled':''}>‹ 上一頁</button>
       <span class="page-info">第 ${purchasePage}／${totalPages} 頁（共 ${sorted.length} 筆）</span>
       <button class="page-btn" onclick="changePurchasePage(1)" ${purchasePage>=totalPages?'disabled':''}>下一頁 ›</button>
     `;
+    pageWrap.innerHTML = paginationHtml;
+    pageWrapTop.innerHTML = paginationHtml;
   }
 
   const itemCount = new Set(purchases.map(p=>p.itemName)).size;
   document.getElementById('buyStats').innerHTML = `
     <div class="stat"><div class="num">${itemCount}</div><div class="label">品項種類</div></div>
   `;
+  document.getElementById('buyItemList').innerHTML = renderItemChips();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderItemChips(){
+  const items = Array.from(new Set(purchases.map(p=>p.itemName))).filter(Boolean).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+  if(items.length === 0) return '<div class="lr-sub">尚未建立任何品項</div>';
+  return `<div class="chip-row">` + items.map(name=>{
+    const safe = escapeHtml(name);
+    return `<span class="chip" data-item="${safe}" onclick="goToItemInStock(this.dataset.item)">${safe}</span>`;
+  }).join('') + `</div>`;
+}
+
+function goToItemInStock(name){
+  document.getElementById('stockSearch').value = name;
+  stockSearchTerm = name;
+  stockPage = 1;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="stock"]').classList.add('active');
+  document.getElementById('panel-stock').classList.add('active');
+  renderInventoryOverview();
 }
 
 function selectBuyLocation(loc){
@@ -351,35 +379,36 @@ function buildInventoryGroups(){
   purchases.forEach(p=>{
     const loc = p.location || '未指定';
     const key = groupKey(p.itemName, loc);
-    if(!groups[key]) groups[key] = { itemName: p.itemName, location: loc, batches: [], totalPieces: 0 };
+    if(!groups[key]) groups[key] = { itemName: p.itemName, location: loc, batches: [] };
     const units = Number(p.unitsPerContainer) || 0;
     const qty = Number(p.containerQty) || 0;
     const total = Number(p.totalPrice) || 0;
     const pieces = units * qty;
-    groups[key].batches.push({ ...p, pieces, costPerPiece: pieces>0 ? total/pieces : 0 });
-    groups[key].totalPieces += pieces;
-  });
-
-  const usedMap = {};
-  usages.forEach(u=>{
-    const loc = u.location || '未指定';
-    const key = groupKey(u.itemName, loc);
-    usedMap[key] = (usedMap[key] || 0) + (Number(u.qty) || 1);
+    const status = p.usageStatus || '未開封';
+    groups[key].batches.push({ ...p, usageStatus: status, pieces, costPerPiece: pieces>0 ? total/pieces : 0 });
   });
 
   return Object.keys(groups).map(key=>{
     const g = groups[key];
-    const used = usedMap[key] || 0;
-    const remain = Math.round((g.totalPieces - used) * 10) / 10;
+    const totalContainers = g.batches.reduce((s,b)=> s + (Number(b.containerQty)||0), 0);
+    const finishedContainers = g.batches.filter(b=>b.usageStatus==='已用完').reduce((s,b)=> s + (Number(b.containerQty)||0), 0);
+    const remainContainers = totalContainers - finishedContainers;
+
     const sortedByDate = g.batches.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||''));
     const latest = sortedByDate[0];
-    const expiries = g.batches.map(b=>b.expiryMonth).filter(Boolean).sort();
-    const nearestExpiry = expiries[0] || null;
+
+    // 效期狀態只看還沒用完的批次
+    const activeExpiries = g.batches.filter(b=>b.usageStatus!=='已用完').map(b=>b.expiryMonth).filter(Boolean).sort();
+    const nearestExpiry = activeExpiries[0] || null;
+
+    const activeBatches = sortedByDate.filter(b=>b.usageStatus!=='已用完');
+    const finishedBatches = sortedByDate.filter(b=>b.usageStatus==='已用完');
+
     return {
       key, itemName: g.itemName, location: g.location,
-      totalPieces: g.totalPieces, used, remain,
+      totalContainers, finishedContainers, remainContainers,
       buyer: latest ? latest.buyer : '',
-      nearestExpiry, batches: sortedByDate
+      nearestExpiry, activeBatches, finishedBatches
     };
   }).sort((a,b)=> a.itemName.localeCompare(b.itemName,'zh-Hant') || a.location.localeCompare(b.location,'zh-Hant'));
 }
@@ -419,27 +448,35 @@ function toggleDetail(key){
   renderInventoryOverview();
 }
 
-function openUseDialog(idx){
-  activeUsePanelIndex = (activeUsePanelIndex === idx) ? null : idx;
+let activeFinishPanelId = null;
+
+async function startUsingBatch(id){
+  setSyncStatus('儲存中…', false);
+  try {
+    await db.collection('family').doc('shared').collection('purchases').doc(id).update({
+      usageStatus: '使用中',
+      startDate: new Date().toISOString().slice(0,10)
+    });
+    setSyncStatus('已同步雲端', false);
+  } catch(err){
+    console.error('更新使用狀態失敗', err);
+    setSyncStatus('雲端更新失敗', true);
+  }
+}
+
+function openFinishPanel(id){
+  activeFinishPanelId = (activeFinishPanelId === id) ? null : id;
   selectedReactions.clear();
   renderInventoryOverview();
 }
 
-function closeUsePanel(){
-  activeUsePanelIndex = null;
+function closeFinishPanel(){
+  activeFinishPanelId = null;
   renderInventoryOverview();
 }
 
-function adjustUseQty(delta){
-  const input = document.getElementById('useQtyInput');
-  if(!input) return;
-  let val = parseFloat(input.value) || 0;
-  val = Math.max(0.5, Math.round((val + delta) * 2) / 2);
-  input.value = val;
-}
-
-function renderUseReactionChips(){
-  const row = document.getElementById('useReactionChips');
+function renderFinishReactionChips(){
+  const row = document.getElementById('finishReactionChips');
   if(!row) return;
   row.innerHTML = '';
   reactionOptions.forEach(opt=>{
@@ -452,132 +489,111 @@ function renderUseReactionChips(){
     el.onclick = ()=>{
       if(selectedReactions.has(opt.key)) selectedReactions.delete(opt.key);
       else selectedReactions.add(opt.key);
-      renderUseReactionChips();
+      renderFinishReactionChips();
     };
     row.appendChild(el);
   });
 }
 
-async function confirmUse(idx){
-  const g = lastInventoryGroups[idx];
-  if(!g) return;
-  const qty = parseFloat(document.getElementById('useQtyInput').value) || 1;
-  const date = document.getElementById('useDateInput').value;
-  const note = document.getElementById('useNoteInput').value.trim();
-
-  if(!date){
-    alert('請選擇使用日期');
-    return;
-  }
+async function confirmFinishBatch(id){
+  const note = document.getElementById('finishNoteInput').value.trim();
+  const finishDate = document.getElementById('finishDateInput').value || new Date().toISOString().slice(0,10);
 
   setSyncStatus('儲存中…', false);
   try {
-    await db.collection('family').doc('shared').collection('usages').add({
-      date, time: '', itemName: g.itemName, location: g.location, qty,
-      dose: '', note, reactions: Array.from(selectedReactions),
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    await db.collection('family').doc('shared').collection('purchases').doc(id).update({
+      usageStatus: '已用完',
+      finishDate,
+      reactions: Array.from(selectedReactions),
+      feedbackNote: note
     });
-    activeUsePanelIndex = null;
+    activeFinishPanelId = null;
     setSyncStatus('已同步雲端', false);
   } catch(err){
-    console.error('新增使用紀錄失敗', err);
-    setSyncStatus('雲端寫入失敗，請確認網路與規則設定', true);
+    console.error('標記用完失敗', err);
+    setSyncStatus('雲端更新失敗', true);
   }
 }
 
-async function deleteUsageEntry(id){
-  setSyncStatus('儲存中…', false);
-  try {
-    await db.collection('family').doc('shared').collection('usages').doc(id).delete();
-    setSyncStatus('已同步雲端', false);
-  } catch(err){
-    console.error('刪除使用紀錄失敗', err);
-    setSyncStatus('雲端刪除失敗', true);
-  }
-}
-
-function renderUsePanel(idx, g){
+function renderFinishPanel(b){
   const today = new Date().toISOString().slice(0,10);
-  setTimeout(renderUseReactionChips, 0);
+  setTimeout(renderFinishReactionChips, 0);
   return `
     <div class="use-panel">
       <div class="form-grid">
         <div class="field">
-          <label>使用顆數</label>
-          <div class="stepper">
-            <button class="page-btn" onclick="adjustUseQty(-0.5)">−</button>
-            <input type="number" id="useQtyInput" value="1" min="0.5" step="0.5">
-            <button class="page-btn" onclick="adjustUseQty(0.5)">＋</button>
-          </div>
-        </div>
-        <div class="field">
-          <label>使用日期</label>
-          <input type="date" id="useDateInput" value="${today}">
+          <label>用完日期</label>
+          <input type="date" id="finishDateInput" value="${today}">
         </div>
         <div class="chip-select">
-          <label>身體反應（可複選）</label>
-          <div class="chip-row" id="useReactionChips"></div>
+          <label>整體身體反應（可複選）</label>
+          <div class="chip-row" id="finishReactionChips"></div>
         </div>
         <div class="field" style="grid-column:1/-1;">
-          <label>備註（選填）</label>
-          <input type="text" id="useNoteInput" placeholder="其他感受描述">
+          <label>心得備註（選填）</label>
+          <input type="text" id="finishNoteInput" placeholder="這罐吃下來的整體感受">
         </div>
       </div>
       <div class="actions">
-        <button class="page-btn" onclick="closeUsePanel()">取消</button>
-        <button class="submit" onclick="confirmUse(${idx})">✅ 確認使用</button>
+        <button class="page-btn" onclick="closeFinishPanel()">取消</button>
+        <button class="submit" onclick="confirmFinishBatch('${b.id}')">✅ 確認用完並回報</button>
       </div>
     </div>
   `;
 }
 
+function renderActiveBatchRow(b){
+  if(editingBatchId === b.id) return renderBatchEditForm(b);
+  const exp = expiryStatus(b.expiryMonth);
+  const statusCls = b.usageStatus === '使用中' ? 'status-inuse' : 'status-unopened';
+  const isFinishOpen = activeFinishPanelId === b.id;
+  return `
+    <div class="list-row">
+      <div class="lr-main">
+        <div class="lr-title">${b.brand} <span class="lr-brand">・ ${b.spec || '—'}</span>
+          <span class="status-badge ${statusCls}">${b.usageStatus}</span>
+          ${exp.label ? ` <span class="expiry-badge ${exp.cls}">${exp.label}</span>` : ''}
+        </div>
+        <div class="lr-sub">購買 ${b.date} ・ ${b.containerQty} 罐 × ${b.unitsPerContainer} 顆${b.buyer ? ' ・ 🧑 ' + b.buyer : ''}</div>
+      </div>
+      <div>
+        ${b.usageStatus === '未開封' ? `<button class="page-btn" onclick="startUsingBatch('${b.id}')">開始使用</button>` : ''}
+        ${b.usageStatus === '使用中' ? `<button class="page-btn" onclick="openFinishPanel('${b.id}')">${isFinishOpen ? '收起' : '用完了，填寫心得'}</button>` : ''}
+      </div>
+      <button class="del-btn" onclick="startEditBatch('${b.id}')">編輯</button>
+      <button class="del-btn" onclick="deletePurchase('${b.id}')">刪除</button>
+    </div>
+    ${isFinishOpen ? renderFinishPanel(b) : ''}
+  `;
+}
+
+function renderFinishedBatchRow(b){
+  if(editingBatchId === b.id) return renderBatchEditForm(b);
+  const badges = (b.reactions||[]).map(r=>{
+    const opt = reactionOptions.find(o=>o.key===r);
+    const cls = opt ? badgeClass(opt.type.replace('neutral-grey','grey')) : 'b-grey';
+    return `<span class="badge ${cls}">${r}</span>`;
+  }).join('') || '<span style="color:var(--ink-soft); font-size:12px;">未記錄反應</span>';
+  return `
+    <div class="list-row">
+      <div class="lr-main">
+        <div class="lr-title">${b.brand} <span class="lr-brand">・ ${b.spec || '—'}</span></div>
+        <div class="lr-sub">${b.date} → 用完於 ${b.finishDate || '—'} ・ ${b.containerQty} 罐</div>
+        <div class="lr-sub">${badges}</div>
+        ${b.feedbackNote ? `<div class="lr-sub">${b.feedbackNote}</div>` : ''}
+      </div>
+      <button class="del-btn" onclick="startEditBatch('${b.id}')">編輯</button>
+      <button class="del-btn" onclick="deletePurchase('${b.id}')">刪除</button>
+    </div>
+  `;
+}
+
 function renderDetailPanel(g){
-  const batchRows = g.batches.map(b=>{
-    if(editingBatchId === b.id) return renderBatchEditForm(b);
-    const exp = expiryStatus(b.expiryMonth);
-    return `
-      <div class="list-row">
-        <div class="lr-main">
-          <div class="lr-title">${b.date} <span class="lr-brand">・ ${b.brand}</span>${exp.label ? ` <span class="expiry-badge ${exp.cls}">${exp.label}</span>` : ''}</div>
-          <div class="lr-sub">${b.spec || '—'} ・ ${b.containerQty} 瓶 × ${b.unitsPerContainer} 顆${b.buyer ? ' ・ 🧑 ' + b.buyer : ''}</div>
-        </div>
-        <div class="lr-total">
-          <div class="money">NT$ ${Number(b.totalPrice).toLocaleString()}</div>
-        </div>
-        <button class="del-btn" onclick="startEditBatch('${b.id}')">編輯</button>
-        <button class="del-btn" onclick="deletePurchase('${b.id}')">刪除</button>
-      </div>
-    `;
-  }).join('');
-
-  const relatedUsages = usages
-    .filter(u => u.itemName === g.itemName && (u.location || '未指定') === g.location)
-    .sort((a,b)=> (b.date||'').localeCompare(a.date||''));
-
-  const usageRows = relatedUsages.map(u=>{
-    const badges = (u.reactions||[]).map(r=>{
-      const opt = reactionOptions.find(o=>o.key===r);
-      const cls = opt ? badgeClass(opt.type.replace('neutral-grey','grey')) : 'b-grey';
-      return `<span class="badge ${cls}">${r}</span>`;
-    }).join('');
-    return `
-      <div class="list-row">
-        <div class="lr-main">
-          <div class="lr-title">${u.date} ・ 使用 ${u.qty || 1} 顆</div>
-          <div class="lr-sub">${badges}</div>
-          ${u.note ? `<div class="lr-sub">${u.note}</div>` : ''}
-        </div>
-        <button class="del-btn" onclick="deleteUsageEntry('${u.id}')">刪除</button>
-      </div>
-    `;
-  }).join('');
-
+  const finishedRows = g.finishedBatches.map(renderFinishedBatchRow).join('');
   return `
     <div class="stock-detail">
-      <h3>採購批次</h3>
-      ${batchRows || '<div class="empty">沒有採購批次</div>'}
-      <h3 style="margin-top:14px;">使用紀錄</h3>
-      ${usageRows || '<div class="empty">沒有使用紀錄</div>'}
+      <h3>使用歷史與心得</h3>
+      ${finishedRows || '<div class="empty">還沒有用完的批次</div>'}
     </div>
   `;
 }
@@ -587,8 +603,10 @@ function renderInventoryOverview(){
   const pageWrap = document.getElementById('stockPagination');
   if(!wrap) return;
 
+  const itemListEl = document.getElementById('stockItemList');
+  if(itemListEl) itemListEl.innerHTML = renderItemChips();
+
   let groups = buildInventoryGroups();
-  lastInventoryGroups = groups;
 
   if(stockSearchTerm){
     groups = groups.filter(g => g.itemName.includes(stockSearchTerm));
@@ -610,11 +628,10 @@ function renderInventoryOverview(){
   const pageGroups = groups.slice(startIdx, startIdx + STOCK_PAGE_SIZE);
 
   wrap.innerHTML = pageGroups.map(g=>{
-    const idx = lastInventoryGroups.indexOf(g);
-    const remainColor = g.remain <= 0 ? 'var(--red)' : (g.remain <= 10 ? 'var(--amber)' : 'var(--teal)');
+    const remainColor = g.remainContainers <= 0 ? 'var(--red)' : (g.remainContainers <= 1 ? 'var(--amber)' : 'var(--teal)');
     const exp = expiryStatus(g.nearestExpiry);
     const isDetailOpen = openDetailKeys.has(g.key);
-    const isUseOpen = activeUsePanelIndex === idx;
+    const activeRows = g.activeBatches.map(renderActiveBatchRow).join('') || '<div class="empty">這個品項目前沒有未用完的批次。</div>';
     return `
       <div class="card item-card">
         <div class="stock-card-head">
@@ -625,15 +642,14 @@ function renderInventoryOverview(){
           ${exp.label ? `<span class="expiry-badge ${exp.cls}">${exp.label}</span>` : ''}
         </div>
         <div class="stats">
-          <div class="stat"><div class="num">${Math.round(g.totalPieces)}</div><div class="label">累計購買顆數</div></div>
-          <div class="stat"><div class="num">${g.used}</div><div class="label">已使用顆數</div></div>
-          <div class="stat"><div class="num" style="color:${remainColor}">${g.remain}</div><div class="label">估算剩餘顆數</div></div>
+          <div class="stat"><div class="num">${g.totalContainers}</div><div class="label">累計購買罐數</div></div>
+          <div class="stat"><div class="num" style="color:${remainColor}">${g.remainContainers}</div><div class="label">剩餘罐數（未開封＋使用中）</div></div>
+          <div class="stat"><div class="num">${g.finishedContainers}</div><div class="label">已用完罐數</div></div>
         </div>
-        <div class="actions" style="justify-content:flex-start; gap:10px;">
-          <button class="page-btn" onclick="openUseDialog(${idx})">${isUseOpen ? '收起使用面板' : '使用'}</button>
-          <button class="page-btn" onclick="toggleDetail('${g.key}')">${isDetailOpen ? '收起明細' : '📋 明細'}</button>
+        ${activeRows}
+        <div class="actions" style="justify-content:flex-start; gap:10px; margin-top:10px;">
+          <button class="page-btn" onclick="toggleDetail('${g.key}')">${isDetailOpen ? '收起使用歷史' : '📋 使用歷史與心得'}</button>
         </div>
-        ${isUseOpen ? renderUsePanel(idx, g) : ''}
         ${isDetailOpen ? renderDetailPanel(g) : ''}
       </div>
     `;

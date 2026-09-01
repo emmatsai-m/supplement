@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>服用紀錄卡</title>
+<title>保健食品資料庫</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -48,6 +48,11 @@
   <!-- 購買紀錄 -->
   <section class="panel active" id="panel-buy">
     <div class="stats" id="buyStats"></div>
+
+    <div class="card">
+      <h2><span class="dot"></span>已建立的品項（點擊查看庫存與曾購買的品牌）</h2>
+      <div id="buyItemList"></div>
+    </div>
 
     <div class="card">
       <h2><span class="dot"></span>新增購買</h2>
@@ -112,6 +117,7 @@
 
     <div class="card">
       <h2><span class="dot"></span>採購紀錄</h2>
+      <div class="pagination" id="buyPaginationTop"></div>
       <div id="buyListWrap"></div>
       <div class="pagination" id="buyPagination"></div>
     </div>
@@ -122,8 +128,12 @@
     <div class="card">
       <h2><span class="dot"></span>庫存總表說明</h2>
       <p style="font-size:12.5px; color:var(--ink-soft); margin:0; line-height:1.6;">
-        依「品項＋存放地點」分組，累計購買顆數扣除使用顆數為估算庫存（非精確值）。點「使用」記錄一次服用（同時保留身體反應追蹤），點「📋 明細」可以編輯或刪除底下每一筆採購／使用紀錄。
+        依「品項＋存放地點」分組。每一筆採購批次獨立追蹤「未開封→使用中→已用完」的狀態，吃完一整批才需要填寫身體反應心得，不同品牌各自獨立回報，方便比較。
       </p>
+    </div>
+    <div class="card">
+      <h2 style="font-size:13px; margin-bottom:10px;"><span class="dot"></span>品項快速篩選</h2>
+      <div id="stockItemList"></div>
     </div>
     <div class="card search-row">
       <input type="text" id="stockSearch" placeholder="搜尋品項名稱" oninput="onStockSearchInput()">

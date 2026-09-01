@@ -133,6 +133,12 @@ tbody tr:hover{ background: rgba(47,111,94,0.05); }
 .expiry-badge.expired{ background: var(--red); }
 .expiry-badge.soon{ background: var(--amber); }
 
+.status-badge{
+  display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:600; white-space:nowrap;
+}
+.status-badge.status-unopened{ background: var(--grey-chip); color:#fff; }
+.status-badge.status-inuse{ background: var(--teal); color:#fff; }
+
 .stock-detail{ margin-top:16px; border-top:1px solid var(--line); padding-top:14px; }
 .stock-detail h3{ font-size:12.5px; margin:0 0 8px; color:var(--ink-soft); letter-spacing:0.05em; }
 
