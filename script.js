@@ -14,6 +14,7 @@ const STOCK_PAGE_SIZE = 12;
 let stockSearchTerm = '';
 let compareSearchTerm = '';
 let stockLocationFilter = '全部';
+let stockExpiryFilter = 'all'; // 'all' | 'soon' | 'expired'
 let compareLocationFilter = '全部';
 let openDetailKeys = new Set();
 let editingBatchId = null;
@@ -440,6 +441,21 @@ function setStockLocationFilter(loc){
   renderInventoryOverview();
 }
 
+function setStockExpiryFilter(type){
+  stockExpiryFilter = type;
+  stockPage = 1;
+  if(type !== 'all'){
+    stockLocationFilter = '全部';
+    document.querySelectorAll('.loc-filter-btn').forEach(btn=>{
+      if(btn.id.startsWith('stockLocBtn-')) btn.classList.toggle('active-filter', btn.id === 'stockLocBtn-全部');
+    });
+    stockSearchTerm = '';
+    const searchInput = document.getElementById('stockSearch');
+    if(searchInput) searchInput.value = '';
+  }
+  renderInventoryOverview();
+}
+
 function clearStockSearch(){
   document.getElementById('stockSearch').value = '';
   stockSearchTerm = '';
@@ -580,6 +596,7 @@ function renderActiveBatchRow(b){
           ${exp.label ? ` <span class="expiry-badge ${exp.cls}">${exp.label}</span>` : ''}
         </div>
         <div class="lr-sub">購買 ${b.date} ・ ${b.containerQty} 罐 × ${b.unitsPerContainer} 顆${b.buyer ? ' ・ 🧑 ' + b.buyer : ''}</div>
+        <div class="lr-sub">效期：${b.expiryMonth || '未設定'}</div>
       </div>
       <div>
         ${b.usageStatus === '未開封' ? `<button class="page-btn" onclick="startUsingBatch('${b.id}')">開始使用</button>` : ''}
@@ -626,12 +643,32 @@ function renderDetailPanel(g){
 function renderInventoryOverview(){
   const wrap = document.getElementById('stockWrap');
   const pageWrap = document.getElementById('stockPagination');
+  const expiryStatsEl = document.getElementById('stockExpiryStats');
   if(!wrap) return;
 
   const itemListEl = document.getElementById('stockItemList');
   if(itemListEl) itemListEl.innerHTML = renderItemChips();
 
-  let groups = buildInventoryGroups();
+  const allGroups = buildInventoryGroups();
+
+  // 效期統計永遠以全部庫存為基準計算，不受目前的搜尋／地點篩選影響
+  if(expiryStatsEl){
+    const soonCount = allGroups.filter(g => expiryStatus(g.nearestExpiry).cls === 'soon').length;
+    const expiredCount = allGroups.filter(g => expiryStatus(g.nearestExpiry).cls === 'expired').length;
+    expiryStatsEl.innerHTML = `
+      <div class="stat stat-clickable ${stockExpiryFilter==='all' ? 'stat-active' : ''}" onclick="setStockExpiryFilter('all')">
+        <div class="num">${allGroups.length}</div><div class="label">全部品項</div>
+      </div>
+      <div class="stat stat-clickable ${stockExpiryFilter==='soon' ? 'stat-active' : ''}" onclick="setStockExpiryFilter('soon')">
+        <div class="num" style="color:var(--amber);">${soonCount}</div><div class="label">⚠️ 即期</div>
+      </div>
+      <div class="stat stat-clickable ${stockExpiryFilter==='expired' ? 'stat-active' : ''}" onclick="setStockExpiryFilter('expired')">
+        <div class="num" style="color:var(--red);">${expiredCount}</div><div class="label">🔴 已過期</div>
+      </div>
+    `;
+  }
+
+  let groups = allGroups;
 
   if(stockSearchTerm){
     groups = groups.filter(g => g.itemName.includes(stockSearchTerm));
@@ -639,9 +676,12 @@ function renderInventoryOverview(){
   if(stockLocationFilter !== '全部'){
     groups = groups.filter(g => g.location === stockLocationFilter);
   }
+  if(stockExpiryFilter !== 'all'){
+    groups = groups.filter(g => expiryStatus(g.nearestExpiry).cls === stockExpiryFilter);
+  }
 
   if(groups.length === 0){
-    wrap.innerHTML = '<div class="card"><div class="empty">還沒有庫存資料，先到「購買紀錄」新增第一筆吧。</div></div>';
+    wrap.innerHTML = '<div class="card"><div class="empty">沒有符合條件的庫存資料。</div></div>';
     pageWrap.innerHTML = '';
     return;
   }
@@ -662,7 +702,7 @@ function renderInventoryOverview(){
         <div class="stock-card-head">
           <div>
             <div class="stock-card-title">${g.itemName} <span class="loc-tag">📍 ${g.location}</span></div>
-            <div class="lr-sub">${g.buyer ? '最近採購人：🧑 ' + g.buyer : ''}</div>
+            <div class="lr-sub">${g.nearestExpiry ? '最近效期：' + g.nearestExpiry : '未設定效期'}${g.buyer ? ' ・ 最近採購人：🧑 ' + g.buyer : ''}</div>
           </div>
           ${exp.label ? `<span class="expiry-badge ${exp.cls}">${exp.label}</span>` : ''}
         </div>
