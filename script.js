@@ -455,7 +455,10 @@ async function startUsingBatch(id){
   try {
     await db.collection('family').doc('shared').collection('purchases').doc(id).update({
       usageStatus: '使用中',
-      startDate: new Date().toISOString().slice(0,10)
+      startDate: new Date().toISOString().slice(0,10),
+      finishDate: '',
+      reactions: [],
+      feedbackNote: ''
     });
     setSyncStatus('已同步雲端', false);
   } catch(err){
@@ -498,11 +501,13 @@ function renderFinishReactionChips(){
 async function confirmFinishBatch(id){
   const note = document.getElementById('finishNoteInput').value.trim();
   const finishDate = document.getElementById('finishDateInput').value || new Date().toISOString().slice(0,10);
+  const existing = purchases.find(p => p.id === id);
 
   setSyncStatus('儲存中…', false);
   try {
     await db.collection('family').doc('shared').collection('purchases').doc(id).update({
       usageStatus: '已用完',
+      startDate: (existing && existing.startDate) || finishDate,
       finishDate,
       reactions: Array.from(selectedReactions),
       feedbackNote: note
