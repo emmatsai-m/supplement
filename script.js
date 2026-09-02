@@ -1,16 +1,4 @@
-// ===== 請貼上 Firebase 專案設定（在 Firebase 主控台「專案設定」裡拿得到）=====
-const firebaseConfig = {
-  apiKey: "AIzaSyAZXE94WwGYSiR2UrOxzhABmNt14zFaMjE",
-  authDomain: "someee-a18ab.firebaseapp.com",
-  projectId: "someee-a18ab",
-  storageBucket: "someee-a18ab.firebasestorage.app",
-  messagingSenderId: "212789693257",
-  appId: "1:212789693257:web:939aea98f5692496182898"
-};
-
-// 要跟你在 Firebase Authentication「使用者」分頁建立的那組帳號 email 完全一樣
-const FAMILY_EMAIL = 'someetest@gmail.com';
-
+// firebaseConfig 與 FAMILY_EMAIL 定義在 firebase-config.js（index.html 會在這個檔案之前載入它）
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -29,6 +17,7 @@ let stockLocationFilter = '全部';
 let compareLocationFilter = '全部';
 let openDetailKeys = new Set();
 let editingBatchId = null;
+let editingBatchContext = null; // 'buy' 或 'stock'，避免兩個分頁同時生成重複 id 的編輯表單
 
 function setSyncStatus(text, isError){
   const el = document.getElementById('syncBadge');
@@ -228,6 +217,9 @@ async function saveEditBatch(id){
       date, itemName, brand, spec, unitsPerContainer, containerQty, totalPrice, expiryMonth, location, buyer
     });
     editingBatchId = null;
+    editingBatchContext = null;
+    renderPurchases();
+    renderInventoryOverview();
     setSyncStatus('已同步雲端', false);
   } catch(err){
     console.error('更新購買紀錄失敗', err);
@@ -235,14 +227,16 @@ async function saveEditBatch(id){
   }
 }
 
-function startEditBatch(id){
+function startEditBatch(id, context){
   editingBatchId = id;
+  editingBatchContext = context || 'buy';
   renderPurchases();
   renderInventoryOverview();
 }
 
 function cancelEditBatch(){
   editingBatchId = null;
+  editingBatchContext = null;
   renderPurchases();
   renderInventoryOverview();
 }
@@ -298,7 +292,7 @@ function renderPurchases(){
     pageWrapTop.innerHTML = '';
   } else {
     listWrap.innerHTML = pageItems.map(p=>{
-      if(editingBatchId === p.id) return renderBatchEditForm(p);
+      if(editingBatchId === p.id && editingBatchContext === 'buy') return renderBatchEditForm(p);
       const units = Number(p.unitsPerContainer) || 0;
       const qty = Number(p.containerQty) || 0;
       const total = Number(p.totalPrice) || 0;
@@ -316,7 +310,7 @@ function renderPurchases(){
             <div class="money">NT$ ${total.toLocaleString()}</div>
             <div class="lr-cost">${pieces>0 ? 'NT$ ' + costPerPiece.toFixed(2) + ' /顆' : ''}</div>
           </div>
-          <button class="del-btn" onclick="startEditBatch('${p.id}')">編輯</button>
+          <button class="del-btn" onclick="startEditBatch('${p.id}','buy')">編輯</button>
           <button class="del-btn" onclick="deletePurchase('${p.id}')">刪除</button>
         </div>
       `;
@@ -548,7 +542,7 @@ function renderFinishPanel(b){
 }
 
 function renderActiveBatchRow(b){
-  if(editingBatchId === b.id) return renderBatchEditForm(b);
+  if(editingBatchId === b.id && editingBatchContext === 'stock') return renderBatchEditForm(b);
   const exp = expiryStatus(b.expiryMonth);
   const statusCls = b.usageStatus === '使用中' ? 'status-inuse' : 'status-unopened';
   const isFinishOpen = activeFinishPanelId === b.id;
@@ -565,7 +559,7 @@ function renderActiveBatchRow(b){
         ${b.usageStatus === '未開封' ? `<button class="page-btn" onclick="startUsingBatch('${b.id}')">開始使用</button>` : ''}
         ${b.usageStatus === '使用中' ? `<button class="page-btn" onclick="openFinishPanel('${b.id}')">${isFinishOpen ? '收起' : '用完了，填寫心得'}</button>` : ''}
       </div>
-      <button class="del-btn" onclick="startEditBatch('${b.id}')">編輯</button>
+      <button class="del-btn" onclick="startEditBatch('${b.id}','stock')">編輯</button>
       <button class="del-btn" onclick="deletePurchase('${b.id}')">刪除</button>
     </div>
     ${isFinishOpen ? renderFinishPanel(b) : ''}
@@ -573,7 +567,7 @@ function renderActiveBatchRow(b){
 }
 
 function renderFinishedBatchRow(b){
-  if(editingBatchId === b.id) return renderBatchEditForm(b);
+  if(editingBatchId === b.id && editingBatchContext === 'stock') return renderBatchEditForm(b);
   const badges = (b.reactions||[]).map(r=>{
     const opt = reactionOptions.find(o=>o.key===r);
     const cls = opt ? badgeClass(opt.type.replace('neutral-grey','grey')) : 'b-grey';
@@ -587,7 +581,7 @@ function renderFinishedBatchRow(b){
         <div class="lr-sub">${badges}</div>
         ${b.feedbackNote ? `<div class="lr-sub">${b.feedbackNote}</div>` : ''}
       </div>
-      <button class="del-btn" onclick="startEditBatch('${b.id}')">編輯</button>
+      <button class="del-btn" onclick="startEditBatch('${b.id}','stock')">編輯</button>
       <button class="del-btn" onclick="deletePurchase('${b.id}')">刪除</button>
     </div>
   `;
