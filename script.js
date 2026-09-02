@@ -18,7 +18,7 @@ let stockExpiryFilter = 'all'; // 'all' | 'soon' | 'expired'
 let compareLocationFilter = '全部';
 let openDetailKeys = new Set();
 let editingBatchId = null;
-let editingBatchContext = null; // 'manage' 或 'stock'，避免兩個分頁同時生成重複 id 的編輯表單
+let editingBatchContext = null; // 目前只會是 'manage'（採購紀錄管理），保留參數是為了未來擴充
 
 function showToast(message, isError){
   let toast = document.getElementById('toastMsg');
@@ -503,7 +503,8 @@ async function startUsingBatch(id){
 
 function openFinishPanel(id){
   activeFinishPanelId = (activeFinishPanelId === id) ? null : id;
-  selectedReactions.clear();
+  const b = purchases.find(p => p.id === id);
+  selectedReactions = new Set((b && b.reactions) || []);
   renderInventoryOverview();
 }
 
@@ -558,13 +559,16 @@ async function confirmFinishBatch(id){
 
 function renderFinishPanel(b){
   const today = new Date().toISOString().slice(0,10);
+  const dateVal = b.finishDate || today;
+  const noteVal = escapeHtml(b.feedbackNote || '');
+  const isEditingFeedback = b.usageStatus === '已用完';
   setTimeout(renderFinishReactionChips, 0);
   return `
     <div class="use-panel">
       <div class="form-grid">
         <div class="field">
           <label>用完日期</label>
-          <input type="date" id="finishDateInput" value="${today}">
+          <input type="date" id="finishDateInput" value="${dateVal}">
         </div>
         <div class="chip-select">
           <label>整體身體反應（可複選）</label>
@@ -572,19 +576,37 @@ function renderFinishPanel(b){
         </div>
         <div class="field" style="grid-column:1/-1;">
           <label>心得備註（選填）</label>
-          <input type="text" id="finishNoteInput" placeholder="這罐吃下來的整體感受">
+          <input type="text" id="finishNoteInput" placeholder="這罐吃下來的整體感受" value="${noteVal}">
         </div>
       </div>
       <div class="actions">
         <button class="page-btn" onclick="closeFinishPanel()">取消</button>
-        <button class="submit" onclick="confirmFinishBatch('${b.id}')">✅ 確認用完並回報</button>
+        <button class="submit" onclick="confirmFinishBatch('${b.id}')">✅ ${isEditingFeedback ? '更新心得' : '確認用完並回報'}</button>
       </div>
     </div>
   `;
 }
 
+async function revertToInUse(id){
+  if(!confirm('確定要刪除這筆使用心得嗎？這罐會退回「使用中」狀態，需要重新填寫心得。')) return;
+  setSyncStatus('儲存中…', false);
+  try {
+    await db.collection('family').doc('shared').collection('purchases').doc(id).update({
+      usageStatus: '使用中',
+      finishDate: '',
+      reactions: [],
+      feedbackNote: ''
+    });
+    setSyncStatus('已同步雲端', false);
+    showToast('🗑️ 已刪除心得，這罐退回使用中');
+  } catch(err){
+    console.error('刪除心得失敗', err);
+    setSyncStatus('雲端更新失敗', true);
+    showToast('❌ 刪除失敗，請確認網路連線', true);
+  }
+}
+
 function renderActiveBatchRow(b){
-  if(editingBatchId === b.id && editingBatchContext === 'stock') return renderBatchEditForm(b);
   const exp = expiryStatus(b.expiryMonth);
   const statusCls = b.usageStatus === '使用中' ? 'status-inuse' : 'status-unopened';
   const isFinishOpen = activeFinishPanelId === b.id;
@@ -602,20 +624,18 @@ function renderActiveBatchRow(b){
         ${b.usageStatus === '未開封' ? `<button class="page-btn" onclick="startUsingBatch('${b.id}')">開始使用</button>` : ''}
         ${b.usageStatus === '使用中' ? `<button class="page-btn" onclick="openFinishPanel('${b.id}')">${isFinishOpen ? '收起' : '用完了，填寫心得'}</button>` : ''}
       </div>
-      <button class="del-btn" onclick="startEditBatch('${b.id}','stock')">編輯</button>
-      <button class="del-btn" onclick="deletePurchase('${b.id}')">刪除</button>
     </div>
     ${isFinishOpen ? renderFinishPanel(b) : ''}
   `;
 }
 
 function renderFinishedBatchRow(b){
-  if(editingBatchId === b.id && editingBatchContext === 'stock') return renderBatchEditForm(b);
   const badges = (b.reactions||[]).map(r=>{
     const opt = reactionOptions.find(o=>o.key===r);
     const cls = opt ? badgeClass(opt.type.replace('neutral-grey','grey')) : 'b-grey';
     return `<span class="badge ${cls}">${r}</span>`;
   }).join('') || '<span style="color:var(--ink-soft); font-size:12px;">未記錄反應</span>';
+  const isFinishOpen = activeFinishPanelId === b.id;
   return `
     <div class="list-row">
       <div class="lr-main">
@@ -624,9 +644,10 @@ function renderFinishedBatchRow(b){
         <div class="lr-sub">${badges}</div>
         ${b.feedbackNote ? `<div class="lr-sub">${b.feedbackNote}</div>` : ''}
       </div>
-      <button class="del-btn" onclick="startEditBatch('${b.id}','stock')">編輯</button>
-      <button class="del-btn" onclick="deletePurchase('${b.id}')">刪除</button>
+      <button class="del-btn" onclick="openFinishPanel('${b.id}')">${isFinishOpen ? '收起' : '編輯心得'}</button>
+      <button class="del-btn" onclick="revertToInUse('${b.id}')">刪除心得</button>
     </div>
+    ${isFinishOpen ? renderFinishPanel(b) : ''}
   `;
 }
 
