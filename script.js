@@ -98,6 +98,7 @@ auth.onAuthStateChanged(user => {
   }
 });
 
+// 舊版身體反應標籤，保留是為了讓「之前建立的心得」還能正常顯示，新資料不會再用這組
 const reactionOptions = [
   { key: '精神良好', type: 'good' },
   { key: '無感', type: 'neutral-grey' },
@@ -106,7 +107,21 @@ const reactionOptions = [
   { key: '皮膚起疹', type: 'bad' },
   { key: '睡眠改善', type: 'good' },
 ];
-let selectedReactions = new Set();
+
+// 新版：簡易量化的五等級滿意度
+const satisfactionLevels = [
+  { value: 5, label: '非常滿意', color: 'var(--teal-deep)' },
+  { value: 4, label: '滿意', color: 'var(--teal)' },
+  { value: 3, label: '普通／無意見', color: 'var(--grey-chip)' },
+  { value: 2, label: '不滿意', color: 'var(--amber)' },
+  { value: 1, label: '非常不滿意', color: 'var(--red)' },
+];
+let selectedSatisfaction = null;
+
+function satisfactionLabel(value){
+  const lv = satisfactionLevels.find(l => l.value === Number(value));
+  return lv || null;
+}
 
 function badgeClass(type){
   if(type === 'good') return 'b-good';
@@ -179,7 +194,7 @@ async function addPurchase(){
     await db.collection('family').doc('shared').collection('purchases').add({
       date, itemName, brand, spec, unitsPerContainer, containerQty, totalPrice,
       expiryMonth, location, buyer,
-      usageStatus: '未開封', startDate: '', finishDate: '', reactions: [], feedbackNote: '',
+      usageStatus: '未開封', startDate: '', finishDate: '', satisfaction: 0, feedbackNote: '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     document.getElementById('buy-item').value = '';
@@ -504,7 +519,7 @@ async function startUsingBatch(id){
 function openFinishPanel(id){
   activeFinishPanelId = (activeFinishPanelId === id) ? null : id;
   const b = purchases.find(p => p.id === id);
-  selectedReactions = new Set((b && b.reactions) || []);
+  selectedSatisfaction = (b && b.satisfaction) || null;
   renderInventoryOverview();
 }
 
@@ -513,21 +528,22 @@ function closeFinishPanel(){
   renderInventoryOverview();
 }
 
-function renderFinishReactionChips(){
+function renderSatisfactionChips(){
   const row = document.getElementById('finishReactionChips');
   if(!row) return;
   row.innerHTML = '';
-  reactionOptions.forEach(opt=>{
+  satisfactionLevels.forEach(lv=>{
     const el = document.createElement('div');
     el.className = 'chip';
-    el.textContent = opt.key;
-    if(selectedReactions.has(opt.key)){
-      el.classList.add(opt.type === 'bad' ? 'on-bad' : opt.type === 'good' ? 'on-good' : 'on-neutral');
+    el.textContent = lv.label;
+    if(selectedSatisfaction === lv.value){
+      el.style.background = lv.color;
+      el.style.borderColor = lv.color;
+      el.style.color = '#fff';
     }
     el.onclick = ()=>{
-      if(selectedReactions.has(opt.key)) selectedReactions.delete(opt.key);
-      else selectedReactions.add(opt.key);
-      renderFinishReactionChips();
+      selectedSatisfaction = lv.value;
+      renderSatisfactionChips();
     };
     row.appendChild(el);
   });
@@ -538,13 +554,18 @@ async function confirmFinishBatch(id){
   const finishDate = document.getElementById('finishDateInput').value || new Date().toISOString().slice(0,10);
   const existing = purchases.find(p => p.id === id);
 
+  if(!selectedSatisfaction){
+    alert('請選擇一個滿意度評分');
+    return;
+  }
+
   setSyncStatus('儲存中…', false);
   try {
     await db.collection('family').doc('shared').collection('purchases').doc(id).update({
       usageStatus: '已用完',
       startDate: (existing && existing.startDate) || finishDate,
       finishDate,
-      reactions: Array.from(selectedReactions),
+      satisfaction: selectedSatisfaction,
       feedbackNote: note
     });
     activeFinishPanelId = null;
@@ -562,7 +583,7 @@ function renderFinishPanel(b){
   const dateVal = b.finishDate || today;
   const noteVal = escapeHtml(b.feedbackNote || '');
   const isEditingFeedback = b.usageStatus === '已用完';
-  setTimeout(renderFinishReactionChips, 0);
+  setTimeout(renderSatisfactionChips, 0);
   return `
     <div class="use-panel">
       <div class="form-grid">
@@ -571,7 +592,7 @@ function renderFinishPanel(b){
           <input type="date" id="finishDateInput" value="${dateVal}">
         </div>
         <div class="chip-select">
-          <label>整體身體反應（可複選）</label>
+          <label>整體滿意度（單選）</label>
           <div class="chip-row" id="finishReactionChips"></div>
         </div>
         <div class="field" style="grid-column:1/-1;">
@@ -594,7 +615,7 @@ async function revertToInUse(id){
     await db.collection('family').doc('shared').collection('purchases').doc(id).update({
       usageStatus: '使用中',
       finishDate: '',
-      reactions: [],
+      satisfaction: 0,
       feedbackNote: ''
     });
     setSyncStatus('已同步雲端', false);
@@ -630,18 +651,27 @@ function renderActiveBatchRow(b){
 }
 
 function renderFinishedBatchRow(b){
-  const badges = (b.reactions||[]).map(r=>{
-    const opt = reactionOptions.find(o=>o.key===r);
-    const cls = opt ? badgeClass(opt.type.replace('neutral-grey','grey')) : 'b-grey';
-    return `<span class="badge ${cls}">${r}</span>`;
-  }).join('') || '<span style="color:var(--ink-soft); font-size:12px;">未記錄反應</span>';
+  const lv = satisfactionLabel(b.satisfaction);
+  let feedbackHtml;
+  if(lv){
+    feedbackHtml = `<span class="badge" style="background:${lv.color};">${lv.label}</span>`;
+  } else if((b.reactions||[]).length > 0){
+    const legacyBadges = b.reactions.map(r=>{
+      const opt = reactionOptions.find(o=>o.key===r);
+      const cls = opt ? badgeClass(opt.type.replace('neutral-grey','grey')) : 'b-grey';
+      return `<span class="badge ${cls}">${r}</span>`;
+    }).join('');
+    feedbackHtml = `${legacyBadges}<div style="font-size:11px; color:var(--ink-soft); margin-top:4px;">（舊版標籤，僅供參考，點「編輯心得」可改用新的滿意度評分）</div>`;
+  } else {
+    feedbackHtml = '<span style="color:var(--ink-soft); font-size:12px;">尚未評分</span>';
+  }
   const isFinishOpen = activeFinishPanelId === b.id;
   return `
     <div class="list-row">
       <div class="lr-main">
         <div class="lr-title">${b.brand} <span class="lr-brand">・ ${b.spec || '—'}</span></div>
         <div class="lr-sub">${b.date} → 用完於 ${b.finishDate || '—'} ・ ${b.containerQty} 罐</div>
-        <div class="lr-sub">${badges}</div>
+        <div class="lr-sub">${feedbackHtml}</div>
         ${b.feedbackNote ? `<div class="lr-sub">${b.feedbackNote}</div>` : ''}
       </div>
       <button class="del-btn" onclick="openFinishPanel('${b.id}')">${isFinishOpen ? '收起' : '編輯心得'}</button>
