@@ -195,3 +195,28 @@ tbody tr:hover{ background: rgba(47,111,94,0.05); }
 }
 .login-card button:hover{ background: var(--teal-deep); }
 .login-error{ font-size: 12px; color: var(--red); margin-top: 12px; min-height: 16px; }
+
+.toast{
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: #fff;
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 999;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  white-space: nowrap;
+  max-width: 90vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.toast-error{ background: var(--red); }

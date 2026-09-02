@@ -40,15 +40,14 @@
   </header>
 
   <div class="tabs" style="margin-bottom:24px;">
-    <button class="tab-btn active" data-tab="buy">📋 購買紀錄</button>
+    <button class="tab-btn active" data-tab="buy">📝 新增購買</button>
+    <button class="tab-btn" data-tab="manage">📇 採購紀錄管理</button>
     <button class="tab-btn" data-tab="stock">📦 庫存總表</button>
     <button class="tab-btn" data-tab="compare">🏷️ 性價比比較</button>
   </div>
 
-  <!-- 購買紀錄 -->
+  <!-- 新增購買 -->
   <section class="panel active" id="panel-buy">
-    <div class="stats" id="buyStats"></div>
-
     <div class="card">
       <h2><span class="dot"></span>已建立的品項（點擊查看庫存與曾購買的品牌）</h2>
       <div id="buyItemList"></div>
@@ -114,6 +113,11 @@
         <button class="submit" onclick="addPurchase()">新增這筆購買</button>
       </div>
     </div>
+  </section>
+
+  <!-- 採購紀錄管理 -->
+  <section class="panel" id="panel-manage">
+    <div class="stats" id="buyStats"></div>
 
     <div class="card">
       <h2><span class="dot"></span>採購紀錄</h2>

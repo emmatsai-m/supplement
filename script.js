@@ -17,7 +17,23 @@ let stockLocationFilter = '全部';
 let compareLocationFilter = '全部';
 let openDetailKeys = new Set();
 let editingBatchId = null;
-let editingBatchContext = null; // 'buy' 或 'stock'，避免兩個分頁同時生成重複 id 的編輯表單
+let editingBatchContext = null; // 'manage' 或 'stock'，避免兩個分頁同時生成重複 id 的編輯表單
+
+function showToast(message, isError){
+  let toast = document.getElementById('toastMsg');
+  if(!toast){
+    toast = document.createElement('div');
+    toast.id = 'toastMsg';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.className = 'toast' + (isError ? ' toast-error' : '');
+  void toast.offsetWidth; // 強制重新觸發動畫
+  toast.classList.add('show');
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(()=>{ toast.classList.remove('show'); }, 2400);
+}
 
 function setSyncStatus(text, isError){
   const el = document.getElementById('syncBadge');
@@ -177,9 +193,11 @@ async function addPurchase(){
     document.getElementById('buy-buyer').value = '';
     updateBuyCalc();
     setSyncStatus('已同步雲端', false);
+    showToast('✅ 已新增，可到「採購紀錄管理」查看');
   } catch(err){
     console.error('新增購買紀錄失敗', err);
     setSyncStatus('雲端寫入失敗，請確認網路與規則設定', true);
+    showToast('❌ 新增失敗，請確認網路連線', true);
   }
 }
 
@@ -188,9 +206,11 @@ async function deletePurchase(id){
   try {
     await db.collection('family').doc('shared').collection('purchases').doc(id).delete();
     setSyncStatus('已同步雲端', false);
+    showToast('🗑️ 已刪除這筆紀錄');
   } catch(err){
     console.error('刪除購買紀錄失敗', err);
     setSyncStatus('雲端刪除失敗', true);
+    showToast('❌ 刪除失敗，請確認網路連線', true);
   }
 }
 
@@ -221,15 +241,17 @@ async function saveEditBatch(id){
     renderPurchases();
     renderInventoryOverview();
     setSyncStatus('已同步雲端', false);
+    showToast('✅ 已儲存修改');
   } catch(err){
     console.error('更新購買紀錄失敗', err);
     setSyncStatus('雲端更新失敗', true);
+    showToast('❌ 儲存失敗，請確認網路或規則設定', true);
   }
 }
 
 function startEditBatch(id, context){
   editingBatchId = id;
-  editingBatchContext = context || 'buy';
+  editingBatchContext = context || 'manage';
   renderPurchases();
   renderInventoryOverview();
 }
@@ -292,7 +314,7 @@ function renderPurchases(){
     pageWrapTop.innerHTML = '';
   } else {
     listWrap.innerHTML = pageItems.map(p=>{
-      if(editingBatchId === p.id && editingBatchContext === 'buy') return renderBatchEditForm(p);
+      if(editingBatchId === p.id && editingBatchContext === 'manage') return renderBatchEditForm(p);
       const units = Number(p.unitsPerContainer) || 0;
       const qty = Number(p.containerQty) || 0;
       const total = Number(p.totalPrice) || 0;
@@ -310,7 +332,7 @@ function renderPurchases(){
             <div class="money">NT$ ${total.toLocaleString()}</div>
             <div class="lr-cost">${pieces>0 ? 'NT$ ' + costPerPiece.toFixed(2) + ' /顆' : ''}</div>
           </div>
-          <button class="del-btn" onclick="startEditBatch('${p.id}','buy')">編輯</button>
+          <button class="del-btn" onclick="startEditBatch('${p.id}','manage')">編輯</button>
           <button class="del-btn" onclick="deletePurchase('${p.id}')">刪除</button>
         </div>
       `;
@@ -455,9 +477,11 @@ async function startUsingBatch(id){
       feedbackNote: ''
     });
     setSyncStatus('已同步雲端', false);
+    showToast('▶️ 已開始使用這罐');
   } catch(err){
     console.error('更新使用狀態失敗', err);
     setSyncStatus('雲端更新失敗', true);
+    showToast('❌ 更新失敗，請確認網路連線', true);
   }
 }
 
@@ -508,9 +532,11 @@ async function confirmFinishBatch(id){
     });
     activeFinishPanelId = null;
     setSyncStatus('已同步雲端', false);
+    showToast('✅ 已記錄回饋，這罐用完了');
   } catch(err){
     console.error('標記用完失敗', err);
     setSyncStatus('雲端更新失敗', true);
+    showToast('❌ 儲存失敗，請確認網路連線', true);
   }
 }
 
