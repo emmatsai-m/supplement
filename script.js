@@ -374,12 +374,13 @@ function escapeHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function renderItemChips(){
+function renderItemChips(handlerFnName){
+  const fn = handlerFnName || 'goToItemInStock';
   const items = Array.from(new Set(purchases.map(p=>p.itemName))).filter(Boolean).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
   if(items.length === 0) return '<div class="lr-sub">尚未建立任何品項</div>';
   return `<div class="chip-row">` + items.map(name=>{
     const safe = escapeHtml(name);
-    return `<span class="chip" data-item="${safe}" onclick="goToItemInStock(this.dataset.item)">${safe}</span>`;
+    return `<span class="chip" data-item="${safe}" onclick="${fn}(this.dataset.item)">${safe}</span>`;
   }).join('') + `</div>`;
 }
 
@@ -392,6 +393,12 @@ function goToItemInStock(name){
   document.querySelector('.tab-btn[data-tab="stock"]').classList.add('active');
   document.getElementById('panel-stock').classList.add('active');
   renderInventoryOverview();
+}
+
+function filterCompareByItem(name){
+  document.getElementById('compareSearch').value = name;
+  compareSearchTerm = name;
+  renderCompare();
 }
 
 function selectBuyLocation(loc){
@@ -803,6 +810,9 @@ function onCompareSearchInput(){
 function renderCompare(){
   const wrap = document.getElementById('compareWrap');
   if(!wrap) return;
+
+  const itemListEl = document.getElementById('compareItemList');
+  if(itemListEl) itemListEl.innerHTML = renderItemChips('filterCompareByItem');
 
   const itemMap = {};
   const filteredPurchases = compareLocationFilter === '全部'
